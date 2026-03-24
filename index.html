@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWF - AI Workflow Framework</title>
+    <meta name="description" content="AWF (AI Workflow Framework) - An open-source, multi-provider, and lightweight framework for orchestrating reproducible and verifiable AI workflows in production.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation simplifiée -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+                <div class="logo">AWF</div>
+                <div class="nav-links">
+                    <a href="#problem">Problem</a>
+                    <a href="#solution">Solution</a>
+                    <a href="#how">How it works</a>
+                    <a href="#start-building">Get Started</a>
+                    <a href="https://awf-project.github.io/cli" target="_blank">Documentation</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero section narrative -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Orchestrate AI workflows<br>
+                    with precision
+                </h1>
+                <p class="hero-subtitle">
+                    The production-ready framework for reproducible, verifiable AI workflows. 
+                    Built in Go. Agnostic to LLM providers.
+                </p>
+                <div class="hero-cta">
+                    <a href="https://github.com/awf-project/awf" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="github-icon">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                        </svg>
+                        View source code
+                    </a>
+                    <a href="#start-building" class="btn btn-secondary">
+                        Get started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Problem section - storytelling -->
+    <section id="problem" class="problem-section">
+        <div class="container">
+            <div class="problem-content">
+                <h2 class="section-title">The problem with AI workflows today</h2>
+                <div class="problem-statements">
+                    <div class="problem-item">
+                        <span class="problem-number">01</span>
+                        <div class="problem-text">
+                            <h3 class="h3-inline">Unreliable execution</h3>
+                            <p>AI workflows fail silently. No audit trail. No reproducibility.</p>
+                        </div>
+                    </div>
+                    <div class="problem-item">
+                        <span class="problem-number">02</span>
+                        <div class="problem-text">
+                            <h3 class="h3-inline">Vendor lock-in</h3>
+                            <p>Switching LLM providers means rewriting your entire workflow.</p>
+                        </div>
+                    </div>
+                    <div class="problem-item">
+                        <span class="problem-number">03</span>
+                        <div class="problem-text">
+                            <h3 class="h3-inline">Production nightmares</h3>
+                            <p>No validation, no monitoring, no guarantees for production use.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution section - visual flow -->
+    <section id="solution" class="solution-section">
+        <div class="container">
+            <div class="solution-content">
+                <h2 class="section-title">AWF transforms AI workflows</h2>
+                <div class="solution-grid">
+                    <div class="solution-item">
+                        <div class="solution-number">01</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Lightning Fast</h3>
+                            <p class="solution-text">Written in Go for blazing performance. Every millisecond counts.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">02</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Provider Agnostic</h3>
+                            <p class="solution-text">Switch between OpenAI, Anthropic, Mistral without changing workflows.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">03</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Production Ready</h3>
+                            <p class="solution-text">Audit, validate, and verify every step. Built for reliability.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">04</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Fully Extensible</h3>
+                            <p class="solution-text">Custom plugins and step types. Make it yours.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works - code focused -->
+    <section id="how" class="how-section">
+        <div class="container">
+            <div class="how-content">
+                <h2 class="section-title">Simple YAML, powerful results</h2>
+                <div class="code-showcase">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="file-name">workflow.yaml</span>
+                    </div>
+                    <div class="code-body">
+                        <pre><code># Code review workflow
+name: code-review
+version: "1.0.0"
+
+inputs:
+  - name: file
+    type: string
+    required: true
+
+states:
+  initial: read
+
+  read:
+    type: step
+    command: cat "{{.inputs.file}}"
+    on_success: analyze
+
+  analyze:
+    type: agent
+    provider: claude
+    prompt: |
+      Review this code for bugs and security issues:
+      {{.states.read.Output}}
+    on_success: report
+
+  report:
+    type: step
+    command: echo "Analysis complete"
+    on_success: done
+
+  done:
+    type: terminal
+    status: success</code></pre>
+                    </div>
+                </div>
+                <p class="code-description">
+                    Define your entire workflow in a single YAML file. Human-readable, version-controllable, and production-ready.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Execution demo section -->
+    <section id="execution" class="execution-section">
+        <div class="container">
+            <div class="execution-content">
+                <h2 class="section-title">See it in action</h2>
+                <p class="execution-description">
+                    Execute your workflows with a single command. AWF provides detailed logging, step tracking, and clear completion status with workflow IDs for reproducibility.
+                </p>
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-body">
+                        <pre><code class="terminal-content">$ awf run commit
+
+Running workflow: commit
+starting workflow workflow=commit id=bad9ead1-172d-4ea1-995a-e31531e47b34
+=== Auto-commit workflow ===
+Checking for changes...
+Staging all changes...
+Claude generating commit message (sonnet)...
+Creating commit...
+Commit created
+Pushing to remote...
+workflow completed step=done status=completed
+=== Completed in 16.523s ===
+  ✓ find_issue_number: completed successfully
+  ✓ stage_changes: completed successfully
+Workflow completed successfully in 16.523s
+Workflow ID: bad9ead1-172d-4ea1-995a-e31531e47b34</code></pre>
+                    </div>
+                </div>
+                <p class="execution-note">
+                    AWF provides detailed execution logs, validation feedback, and clear success/failure status for every workflow run.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrations - CLI tools focus -->
+    <section id="start-building" class="start-building-section">
+        <div class="container">
+            <div class="start-building-content">
+                <h2 class="section-title">Start Building</h2>
+                <p class="start-building-description">
+                    Get up and running in seconds. Choose your preferred installation method.
+                </p>
+
+                <!-- Tab navigation -->
+                <div class="install-tabs">
+                    <button class="tab-btn active" data-tab="shell">Shell Script</button>
+                    <button class="tab-btn" data-tab="go">Go</button>
+                    <button class="tab-btn" data-tab="source">Source</button>
+                </div>
+
+                <!-- Shell script installation -->
+                <div class="install-tab-content active" id="shell">
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#install-shell">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                            </svg>
+                            <span class="copy-tooltip">Copy</span>
+                        </button>
+                        <pre><code id="install-shell">curl -fsSL https://raw.githubusercontent.com/awf-project/cli/main/scripts/install.sh | sh</code></pre>
+                    </div>
+                </div>
+
+                <!-- Go installation -->
+                <div class="install-tab-content" id="go">
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#install-go">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                            </svg>
+                            <span class="copy-tooltip">Copy</span>
+                        </button>
+                        <pre><code id="install-go">go install github.com/awf-project/cli/cmd/awf@latest</code></pre>
+                    </div>
+                </div>
+
+                <!-- Source installation -->
+                <div class="install-tab-content" id="source">
+                    <div class="code-block-wrapper">
+                        <button class="copy-btn" data-clipboard-target="#install-source">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                            </svg>
+                            <span class="copy-tooltip">Copy</span>
+                        </button>
+                        <pre><code id="install-source">git clone https://github.com/awf-project/cli.git
+cd cli
+make build
+make install</code></pre>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrations - Ecosystem focus -->
+    <section class="integrations-section">
+        <div class="container">
+            <h2 class="section-title">Seamlessly integrates with your ecosystem</h2>
+            <p class="integrations-description">
+                AWF isn't just another walled garden. It leverages the tools and AI providers you already use and trust.
+            </p>
+            <div class="integrations-grid">
+                <!-- AI Providers -->
+                <div class="integration-item">
+                    <img src="logos/openai.svg" alt="OpenAI" class="integration-logo" width="80" height="80">
+                    <span>OpenAI</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/claude.svg" alt="Claude" class="integration-logo" width="80" height="80">
+                    <span>Claude</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/gemini.svg" alt="Gemini" class="integration-logo" width="80" height="80">
+                    <span>Gemini</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/ollama.svg" alt="Ollama" class="integration-logo" width="80" height="80">
+                    <span>Ollama</span>
+                </div>
+                <!-- Core Tools -->
+                <div class="integration-item">
+                    <img src="logos/bash.svg" alt="Bash" class="integration-logo" width="80" height="80">
+                    <span>Bash</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/git.svg" alt="Git" class="integration-logo" width="80" height="80">
+                    <span>Git</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/docker.svg" alt="Docker" class="integration-logo" width="80" height="80">
+                    <span>Docker</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/php.svg" alt="PHP" class="integration-logo" width="80" height="80">
+                    <span>PHP</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/python.svg" alt="Python" class="integration-logo" width="80" height="80">
+                    <span>Python</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/slack.svg" alt="Slack" class="integration-logo" width="80" height="80">
+                    <span>Slack</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/jira-cli.svg" alt="Jira" class="integration-logo" width="80" height="80">
+                    <span>Jira</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Toolbox - Core CLI tools list -->
+    <section class="toolbox-section">
+        <div class="container">
+            <h2 class="section-title">...and every other tool in your terminal</h2>
+            <div class="toolbox-grid">
+                <span class="tool-tag">gh</span>
+                <span class="tool-tag">rtk</span>
+                <span class="tool-tag">jq</span>
+                <span class="tool-tag">grepai</span>
+                <span class="tool-tag">make</span>
+                <span class="tool-tag">curl</span>
+                <span class="tool-tag">ripgrep</span>
+                <span class="tool-tag">sed</span>
+                <span class="tool-tag">awk</span>
+                <span class="tool-tag">tree-sitter</span>
+                <span class="tool-tag">npm</span>
+                <span class="tool-tag">go</span>
+                <span class="tool-tag">cargo</span>
+                <span class="tool-tag">composer</span>
+                <span class="tool-tag">cat</span>
+                <span class="tool-tag">grep</span>
+                <span class="tool-tag">find</span>
+            </div>
+            <p class="toolbox-description">
+                If it's in your PATH, it's in your workflow. AWF orchestrates any CLI utility with zero configuration.
+            </p>
+        </div>
+    </section>
+
+    <!-- Call to action final -->
+    <section id="start" class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="section-title">Ready to explore?</h2>
+                <p class="cta-text">
+                    Dive into the source code and start building production-ready AI workflows with AWF.
+                </p>
+                <a href="https://github.com/awf-project/awf" class="btn btn-primary btn-lg">
+                    Explore on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <h3>AWF</h3>
+                    <p>AI Workflow Framework</p>
+                </div>
+                <div class="footer-right">
+                    <ul>
+                        <li><a href="https://github.com/awf-project/awf">GitHub</a></li>
+                        <li><a href="https://discord.gg/awf">Discord</a></li>
+                        <li><a href="https://github.com/awf-project/awf/blob/main/LICENSE">License</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 AWF Project. <a href="https://github.com/awf-project/awf/blob/main/LICENSE">EUPL-1.2</a> License. Made in 🇫🇷 with ❤️</p>
+                <p>"Every token helps, every token matters."</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Tab functionality for installation methods
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.install-tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.getAttribute('data-tab');
+                
+                // Remove active class from all tabs
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                btn.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Copy to clipboard functionality
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const codeBlock = btn.parentElement.querySelector('code');
+                const code = codeBlock.textContent;
+                
+                try {
+                    await navigator.clipboard.writeText(code);
+                    
+                    // Show copied feedback
+                    btn.classList.add('copied');
+                    const tooltip = btn.querySelector('.copy-tooltip');
+                    if (tooltip) {
+                        tooltip.textContent = 'Copied!';
+                    }
+                    
+                    setTimeout(() => {
+                        btn.classList.remove('copied');
+                        if (tooltip) {
+                            tooltip.textContent = 'Copy';
+                        }
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                }
+            });
+        });
+
+        // Intersection observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.problem-item, .solution-item, .integration-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
