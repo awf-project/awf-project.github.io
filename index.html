@@ -28,20 +28,24 @@
     <header class="hero">
         <div class="container">
             <div class="hero-content">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 9999px; margin-bottom: 2rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e;"></span>
+                    100% Open Source
+                </div>
                 <h1 class="hero-title">
                     Orchestrate AI workflows<br>
-                    with precision
+                    with <span class="gradient-text">precision</span>
                 </h1>
                 <p class="hero-subtitle">
-                    The production-ready framework for reproducible, verifiable AI workflows. 
-                    Built in Go. Agnostic to LLM providers.
+                    The deterministic, production-grade framework for verifiable AI execution. 
+                    Built in Go for extreme speed. Agnostic to LLM providers.
                 </p>
                 <div class="hero-cta">
-                    <a href="https://github.com/awf-project/awf" class="btn btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="github-icon">
+                    <a href="https://github.com/awf-project/cli" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="github-icon" aria-hidden="true">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
                         </svg>
-                        View source code
+                        View on GitHub
                     </a>
                     <a href="#start-building" class="btn btn-secondary">
                         Get started
@@ -50,6 +54,26 @@
             </div>
         </div>
     </header>
+
+    <!-- Social Proof / Stats -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">100%</span>
+                    <span class="stat-label">Deterministic</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">Zero</span>
+                    <span class="stat-label">Vendor Lock-in</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">Go</span>
+                    <span class="stat-label">Powered Engine</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Problem section - storytelling -->
     <section id="problem" class="problem-section">
@@ -60,21 +84,21 @@
                     <div class="problem-item">
                         <span class="problem-number">01</span>
                         <div class="problem-text">
-                            <h3 class="h3-inline">Unreliable execution</h3>
+                            <h3>Unreliable execution</h3>
                             <p>AI workflows fail silently. No audit trail. No reproducibility.</p>
                         </div>
                     </div>
                     <div class="problem-item">
                         <span class="problem-number">02</span>
                         <div class="problem-text">
-                            <h3 class="h3-inline">Vendor lock-in</h3>
+                            <h3>Vendor lock-in</h3>
                             <p>Switching LLM providers means rewriting your entire workflow.</p>
                         </div>
                     </div>
                     <div class="problem-item">
                         <span class="problem-number">03</span>
                         <div class="problem-text">
-                            <h3 class="h3-inline">Production nightmares</h3>
+                            <h3>Production nightmares</h3>
                             <p>No validation, no monitoring, no guarantees for production use.</p>
                         </div>
                     </div>
@@ -129,47 +153,47 @@
                 <h2 class="section-title">Simple YAML, powerful results</h2>
                 <div class="code-showcase">
                     <div class="code-header">
-                        <div class="code-dots">
+                        <div class="code-dots" aria-hidden="true">
                             <span class="dot red"></span>
                             <span class="dot yellow"></span>
                             <span class="dot green"></span>
                         </div>
-                        <span class="file-name">workflow.yaml</span>
+                        <span class="file-name">code-review.yaml</span>
                     </div>
                     <div class="code-body">
-                        <pre><code># Code review workflow
-name: code-review
-version: "1.0.0"
+                        <pre><code><span class="hl-comment"># Code review workflow</span>
+<span class="hl-key">name:</span> code-review
+<span class="hl-key">version:</span> <span class="hl-string">"1.0.0"</span>
 
-inputs:
-  - name: file
-    type: string
-    required: true
+<span class="hl-key">inputs:</span>
+  <span class="hl-key">- name:</span> file
+    <span class="hl-key">type:</span> string
+    <span class="hl-key">required:</span> true
 
-states:
-  initial: read
+<span class="hl-key">states:</span>
+  <span class="hl-key">initial:</span> read
 
-  read:
-    type: step
-    command: cat "{{.inputs.file}}"
-    on_success: analyze
+  <span class="hl-key">read:</span>
+    <span class="hl-key">type:</span> step
+    <span class="hl-key">command:</span> cat <span class="hl-string">"</span><span class="hl-var">{{.inputs.file}}</span><span class="hl-string">"</span>
+    <span class="hl-key">on_success:</span> analyze
 
-  analyze:
-    type: agent
-    provider: claude
-    prompt: |
+  <span class="hl-key">analyze:</span>
+    <span class="hl-key">type:</span> agent
+    <span class="hl-key">provider:</span> claude
+    <span class="hl-key">prompt:</span> |
       Review this code for bugs and security issues:
-      {{.states.read.Output}}
-    on_success: report
+      <span class="hl-var">{{.states.read.Output}}</span>
+    <span class="hl-key">on_success:</span> report
 
-  report:
-    type: step
-    command: echo "Analysis complete"
-    on_success: done
+  <span class="hl-key">report:</span>
+    <span class="hl-key">type:</span> step
+    <span class="hl-key">command:</span> echo <span class="hl-string">"Analysis complete"</span>
+    <span class="hl-key">on_success:</span> done
 
-  done:
-    type: terminal
-    status: success</code></pre>
+  <span class="hl-key">done:</span>
+    <span class="hl-key">type:</span> terminal
+    <span class="hl-key">status:</span> success</code></pre>
                     </div>
                 </div>
                 <p class="code-description">
@@ -189,7 +213,7 @@ states:
                 </p>
                 <div class="terminal-window">
                     <div class="terminal-header">
-                        <div class="terminal-dots">
+                        <div class="terminal-dots" aria-hidden="true">
                             <span class="dot red"></span>
                             <span class="dot yellow"></span>
                             <span class="dot green"></span>
@@ -197,23 +221,29 @@ states:
                         <span class="terminal-title">Terminal</span>
                     </div>
                     <div class="terminal-body">
-                        <pre><code class="terminal-content">$ awf run commit
+                        <pre><code class="terminal-content"><span class="terminal-white">$ awf run code-review --input file=service.go --output=streaming --verbose=true</span>
 
-Running workflow: commit
-starting workflow workflow=commit id=bad9ead1-172d-4ea1-995a-e31531e47b34
-=== Auto-commit workflow ===
-Checking for changes...
-Staging all changes...
-Claude generating commit message (sonnet)...
-Creating commit...
-Commit created
-Pushing to remote...
-workflow completed step=done status=completed
-=== Completed in 16.523s ===
-  ✓ find_issue_number: completed successfully
-  ✓ stage_changes: completed successfully
-Workflow completed successfully in 16.523s
-Workflow ID: bad9ead1-172d-4ea1-995a-e31531e47b34</code></pre>
+<span class="terminal-dim">registered desktop notification backend
+registered webhook notification backend</span>
+<span class="terminal-white">Running workflow: code-review
+starting workflow workflow=code-review id=3eb274fa-186e-4070-a6a0-c26eea61ad28</span>
+<span class="terminal-dim">executing step step=read
+executing step step=analyze
+executing agent step step=analyze provider=claude
+executing step step=report</span>
+<span class="terminal-cyan">[OUT]</span> <span class="terminal-white">Analysis complete</span>
+<span class="terminal-dim">recorded execution history workflow_id=3eb274fa-186e-4070-a6a0-c26eea61ad28 status=completed</span>
+<span class="terminal-success">workflow completed step=done status=completed
+  ✓ read: completed successfully</span>
+<span class="terminal-white">Workflow completed successfully in 36.6s
+Workflow ID: 3eb274fa-186e-4070-a6a0-c26eea61ad28
+
+--- Execution Details ---
+Status: <span class="terminal-success">completed</span>
+Steps executed:
+  report:    <span class="terminal-success">completed</span> (1ms)
+  read:      <span class="terminal-success">completed</span> (1ms)
+  analyze:   <span class="terminal-success">completed</span> (36.585s)</span></code></pre>
                     </div>
                 </div>
                 <p class="execution-note">
@@ -233,51 +263,81 @@ Workflow ID: bad9ead1-172d-4ea1-995a-e31531e47b34</code></pre>
                 </p>
 
                 <!-- Tab navigation -->
-                <div class="install-tabs">
-                    <button class="tab-btn active" data-tab="shell">Shell Script</button>
-                    <button class="tab-btn" data-tab="go">Go</button>
-                    <button class="tab-btn" data-tab="source">Source</button>
+                <div class="install-tabs" role="tablist" aria-label="Installation methods">
+                    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="shell-panel" id="tab-shell" data-tab="shell">Shell Script</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="go-panel" id="tab-go" data-tab="go">Go</button>
+                    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="source-panel" id="tab-source" data-tab="source">Source</button>
                 </div>
 
                 <!-- Shell script installation -->
-                <div class="install-tab-content active" id="shell">
-                    <div class="code-block-wrapper">
-                        <button class="copy-btn" data-clipboard-target="#install-shell">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
-                            </svg>
-                            <span class="copy-tooltip">Copy</span>
-                        </button>
-                        <pre><code id="install-shell">curl -fsSL https://raw.githubusercontent.com/awf-project/cli/main/scripts/install.sh | sh</code></pre>
+                <div class="install-tab-content active" id="shell" role="tabpanel" id="shell-panel" aria-labelledby="tab-shell">
+                    <div class="code-showcase">
+                        <div class="code-header">
+                            <div class="code-dots" aria-hidden="true">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="file-name">install.sh</span>
+                            <button class="copy-btn" data-clipboard-target="#install-shell" aria-label="Copy installation command">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                                </svg>
+                                <span class="copy-tooltip" aria-live="polite">Copy</span>
+                            </button>
+                        </div>
+                        <div class="code-body">
+                            <pre><code id="install-shell">curl -fsSL https://raw.githubusercontent.com/awf-project/cli/main/scripts/install.sh | sh</code></pre>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Go installation -->
-                <div class="install-tab-content" id="go">
-                    <div class="code-block-wrapper">
-                        <button class="copy-btn" data-clipboard-target="#install-go">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
-                            </svg>
-                            <span class="copy-tooltip">Copy</span>
-                        </button>
-                        <pre><code id="install-go">go install github.com/awf-project/cli/cmd/awf@latest</code></pre>
+                <div class="install-tab-content" id="go" role="tabpanel" id="go-panel" aria-labelledby="tab-go">
+                    <div class="code-showcase">
+                        <div class="code-header">
+                            <div class="code-dots" aria-hidden="true">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="file-name">go install</span>
+                            <button class="copy-btn" data-clipboard-target="#install-go" aria-label="Copy installation command">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                                </svg>
+                                <span class="copy-tooltip" aria-live="polite">Copy</span>
+                            </button>
+                        </div>
+                        <div class="code-body">
+                            <pre><code id="install-go">go install github.com/awf-project/cli/cmd/awf@latest</code></pre>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Source installation -->
-                <div class="install-tab-content" id="source">
-                    <div class="code-block-wrapper">
-                        <button class="copy-btn" data-clipboard-target="#install-source">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
-                            </svg>
-                            <span class="copy-tooltip">Copy</span>
-                        </button>
-                        <pre><code id="install-source">git clone https://github.com/awf-project/cli.git
+                <div class="install-tab-content" id="source" role="tabpanel" id="source-panel" aria-labelledby="tab-source">
+                    <div class="code-showcase">
+                        <div class="code-header">
+                            <div class="code-dots" aria-hidden="true">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <span class="file-name">build from source</span>
+                            <button class="copy-btn" data-clipboard-target="#install-source" aria-label="Copy installation commands">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M4 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V2zm8-4a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1V3a1 1 0 00-1-1h-5z"/>
+                                </svg>
+                                <span class="copy-tooltip" aria-live="polite">Copy</span>
+                            </button>
+                        </div>
+                        <div class="code-body">
+                            <pre><code id="install-source">git clone https://github.com/awf-project/cli.git
 cd cli
 make build
 make install</code></pre>
+                        </div>
                     </div>
                 </div>
 
@@ -306,6 +366,10 @@ make install</code></pre>
                 <div class="integration-item">
                     <img src="logos/gemini.svg" alt="Gemini" class="integration-logo" width="80" height="80">
                     <span>Gemini</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/opencode.svg" alt="OpenCode" class="integration-logo" width="80" height="80">
+                    <span>OpenCode</span>
                 </div>
                 <div class="integration-item">
                     <img src="logos/ollama.svg" alt="Ollama" class="integration-logo" width="80" height="80">
@@ -381,7 +445,7 @@ make install</code></pre>
                 <p class="cta-text">
                     Dive into the source code and start building production-ready AI workflows with AWF.
                 </p>
-                <a href="https://github.com/awf-project/awf" class="btn btn-primary btn-lg">
+                <a href="https://github.com/awf-project/cli" class="btn btn-primary btn-lg">
                     Explore on GitHub
                 </a>
             </div>
@@ -398,14 +462,14 @@ make install</code></pre>
                 </div>
                 <div class="footer-right">
                     <ul>
-                        <li><a href="https://github.com/awf-project/awf">GitHub</a></li>
-                        <li><a href="https://discord.gg/awf">Discord</a></li>
-                        <li><a href="https://github.com/awf-project/awf/blob/main/LICENSE">License</a></li>
+                        <li><a href="https://github.com/awf-project/cli">GitHub</a></li>
+                        <li><a href="https://discord.gg/EGV56Tha">Discord</a></li>
+                        <li><a href="https://github.com/awf-project/cli/blob/main/LICENSE">License</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>© 2026 AWF Project. <a href="https://github.com/awf-project/awf/blob/main/LICENSE">EUPL-1.2</a> License. Made in 🇫🇷 with ❤️</p>
+                <p>© 2026 AWF Project. <a href="https://github.com/awf-project/cli/blob/main/LICENSE">EUPL-1.2</a> License. Made in 🇫🇷 with ❤️</p>
                 <p>"Every token helps, every token matters."</p>
             </div>
         </div>
@@ -434,13 +498,17 @@ make install</code></pre>
             btn.addEventListener('click', () => {
                 const tabName = btn.getAttribute('data-tab');
                 
-                // Remove active class from all tabs
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding content
-                btn.classList.add('active');
-                document.getElementById(tabName).classList.add('active');
+                // Update ARIA attributes and classes
+                tabBtns.forEach(b => {
+                    const isActive = b === btn;
+                    b.classList.toggle('active', isActive);
+                    b.setAttribute('aria-selected', isActive);
+                });
+
+                tabContents.forEach(c => {
+                    const isActive = c.id === tabName;
+                    c.classList.toggle('active', isActive);
+                });
             });
         });
 
