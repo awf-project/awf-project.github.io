@@ -19,10 +19,9 @@
                     <span></span>
                 </button>
                 <div class="nav-links">
-                    <a href="#problem">Problem</a>
-                    <a href="#solution">Solution</a>
-                    <a href="#how">How it works</a>
-                    <a href="#start-building">Get Started</a>
+                    <a href="#ecosystem">Ecosystem</a>
+                    <a href="#pillars">Pillars</a>
+                    <a href="#cli">The CLI</a>
                     <a href="https://awf-project.github.io/cli" target="_blank">Documentation</a>
                 </div>
             </div>
@@ -30,122 +29,303 @@
     </nav>
 
     <!-- Hero section narrative -->
-    <header class="hero">
+    <header id="ecosystem" class="hero">
+        <svg class="hero-speedlines" viewBox="0 0 140 90" aria-hidden="true">
+            <g stroke="#0E0E0E" stroke-width="3" stroke-linecap="round">
+                <line x1="0"  y1="10" x2="80"  y2="10"/>
+                <line x1="0"  y1="28" x2="110" y2="28"/>
+                <line x1="0"  y1="46" x2="60"  y2="46"/>
+                <line x1="0"  y1="64" x2="95"  y2="64"/>
+                <line x1="0"  y1="82" x2="70"  y2="82"/>
+            </g>
+        </svg>
+        <!-- Dinosaur laser scene (stop-motion) -->
+        <div class="dino-scene" aria-hidden="true">
+            <svg viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <filter id="laser-glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feFlood flood-color="#FF2D4C" result="color" />
+                        <feComposite in="color" in2="blur" operator="in" result="glow" />
+                        <feMerge>
+                            <feMergeNode in="glow" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                    <linearGradient id="dino-skin" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#22C55E" />
+                        <stop offset="100%" style="stop-color:#14532D" />
+                    </linearGradient>
+                    <radialGradient id="eye-glow-grad">
+                        <stop offset="0%" style="stop-color:#FFD60A" />
+                        <stop offset="100%" style="stop-color:transparent" />
+                    </radialGradient>
+                </defs>
+
+                <!-- Ground shadow and dust -->
+                <g class="dino-ground">
+                    <ellipse cx="190" cy="235" rx="80" ry="10" fill="#000" opacity=".1" />
+                    <g class="dino-dust" opacity="0.4">
+                        <circle cx="140" cy="240" r="4" fill="#A8A29E" />
+                        <circle cx="230" cy="238" r="5" fill="#A8A29E" />
+                        <circle cx="180" cy="242" r="3" fill="#A8A29E" />
+                    </g>
+                </g>
+
+                <!-- Dinosaur body (facing left) -->
+                <g class="dino-body">
+                    <!-- Tail and Main Body -->
+                    <path d="M 120 80 L 160 85 L 200 95 L 260 80 L 315 65 L 280 110 L 240 145 L 200 165 L 160 175 L 120 160 L 100 120 Z" fill="url(#dino-skin)" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+
+                    <!-- Muscle Shading -->
+                    <path d="M 160 100 Q 180 110 185 140" fill="none" stroke="#14532D" stroke-width="6" opacity="0.3" stroke-linecap="round"/>
+                    <path d="M 210 110 Q 230 120 235 150" fill="none" stroke="#14532D" stroke-width="6" opacity="0.3" stroke-linecap="round"/>
+                    
+                    <!-- Underbelly (lighter color) -->
+                    <path d="M 100 120 L 120 160 L 160 175 L 200 165 L 240 145 L 220 130 L 180 145 L 140 140 L 115 115 Z" fill="#86EFAC" stroke="#0E0E0E" stroke-width="2" opacity="0.6"/>
+
+                    <!-- Right Arm (Back) -->
+                    <g class="arm-right">
+                        <path d="M 125 115 L 105 125 L 110 135 L 125 125 Z" fill="#15803D" stroke="#0E0E0E" stroke-width="3" stroke-linejoin="round"/>
+                        <path d="M 105 125 L 98 132 M 105 130 L 100 138" fill="none" stroke="#0E0E0E" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Right Leg (Back) -->
+                    <g class="leg-right">
+                        <path d="M 210 140 Q 240 160 220 200 L 230 225 L 185 235 L 180 225 L 205 200 Q 190 160 210 140 Z" fill="#15803D" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+                        <polygon points="185,225 172,228 185,235" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="2"/>
+                        <polygon points="195,230 182,235 195,242" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="2"/>
+                    </g>
+
+                    <!-- Left Leg (Front) -->
+                    <g class="leg-left">
+                        <path d="M 160 145 Q 190 170 175 205 L 185 235 L 140 245 L 135 235 L 155 205 Q 140 160 160 145 Z" fill="url(#dino-skin)" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+                        <polygon points="140,235 128,238 140,245" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="2"/>
+                        <polygon points="148,242 135,246 148,252" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="2"/>
+                        <polygon points="158,245 145,250 158,256" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="2"/>
+                    </g>
+
+                    <!-- Left Arm (Front) -->
+                    <g class="arm-left">
+                        <path d="M 110 120 L 85 135 L 90 148 L 115 135 Z" fill="url(#dino-skin)" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+                        <path d="M 85 135 L 75 142 M 85 142 L 78 150" fill="none" stroke="#0E0E0E" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- Scales/Details -->
+                    <g fill="#14532D" opacity="0.4">
+                        <circle cx="160" cy="95" r="3"/><circle cx="168" cy="98" r="2"/><circle cx="162" cy="104" r="2.5"/>
+                        <circle cx="210" cy="105" r="3"/><circle cx="218" cy="108" r="2"/><circle cx="212" cy="114" r="2.5"/>
+                        <circle cx="250" cy="95" r="3"/><circle cx="258" cy="98" r="2"/>
+                        <circle cx="280" cy="85" r="2"/><circle cx="288" cy="88" r="1.5"/>
+                    </g>
+
+                    <!-- Back Spikes -->
+                    <path d="M 125 80 L 120 65 L 140 82 M 150 83 L 155 70 L 170 87 M 180 90 L 195 75 L 205 93 M 215 90 L 225 75 L 235 86 M 245 83 L 255 68 L 265 78 M 275 75 L 285 60 L 295 70 M 300 68 L 310 55 L 315 65" fill="#FBBF24" stroke="#0E0E0E" stroke-width="3" stroke-linejoin="round"/>
+
+                    <!-- Upper Head -->
+                    <path d="M 40 105 L 35 90 L 50 75 L 70 70 L 80 65 L 100 68 L 115 65 L 135 75 L 145 100 L 130 120 L 90 115 L 60 110 Z" fill="url(#dino-skin)" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+
+                    <!-- Snout Wrinkles -->
+                    <path d="M 45 92 Q 55 88 65 92" fill="none" stroke="#0E0E0E" stroke-width="2" opacity="0.4"/>
+                    <path d="M 48 97 Q 58 93 68 97" fill="none" stroke="#0E0E0E" stroke-width="2" opacity="0.3"/>
+
+                    <!-- Scar -->
+                    <path d="M 50 85 L 60 95 M 55 85 L 65 95" fill="none" stroke="#FF2D4C" stroke-width="2" stroke-linecap="round"/>
+
+                    <!-- Jaw (Lower) -->
+                    <path d="M 45 105 L 50 125 L 80 135 L 110 135 L 135 125 L 130 115 L 90 110 L 60 105 Z" fill="url(#dino-skin)" stroke="#0E0E0E" stroke-width="4" stroke-linejoin="round"/>
+
+                    <!-- Saliva -->
+                    <path d="M 60 125 Q 62 140 65 125" fill="none" stroke="#BAE6FD" stroke-width="1.5" opacity="0.6"/>
+                    <path d="M 85 130 Q 87 145 90 130" fill="none" stroke="#BAE6FD" stroke-width="1.5" opacity="0.6"/>
+
+                    <!-- Teeth -->
+                    <g fill="#FFF5DC" stroke="#0E0E0E" stroke-width="1.5">
+                        <polygon points="45,106 50,118 55,108"/><polygon points="58,109 63,122 68,111"/><polygon points="72,112 77,125 82,113"/><polygon points="86,114 91,126 96,115"/><polygon points="100,116 105,126 110,116"/>
+                        <polygon points="52,126 57,114 62,128"/><polygon points="65,130 70,117 75,132"/><polygon points="80,134 85,120 90,135"/><polygon points="95,135 100,120 105,135"/>
+                    </g>
+
+                    <!-- Eyebrow Ridges -->
+                    <path d="M 65 82 L 78 76 L 90 84" fill="none" stroke="#0E0E0E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M 100 84 L 110 78 L 122 86" fill="none" stroke="#0E0E0E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                    <!-- Nostril -->
+                    <path d="M 42 85 Q 45 82 48 86" fill="none" stroke="#0E0E0E" stroke-width="3" stroke-linecap="round"/>
+
+                    <!-- Eyes (Angry) -->
+                    <path d="M 68 88 Q 78 78 88 88 Q 85 96 78 96 Q 70 96 68 88 Z" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="3"/>
+                    <path d="M 100 90 Q 110 80 120 90 Q 117 98 110 98 Q 102 98 100 90 Z" fill="#FFF5DC" stroke="#0E0E0E" stroke-width="3"/>
+                    
+                    <!-- Pupils -->
+                    <circle class="dino-pupil" cx="75" cy="88" r="4" fill="#0E0E0E"/>
+                    <circle class="dino-pupil" cx="107" cy="90" r="4" fill="#0E0E0E"/>
+                    
+                    <!-- Eye Charging Glow -->
+                    <circle class="dino-charge" cx="75" cy="88" r="15" fill="url(#eye-glow-grad)" opacity="0"/>
+                    <circle class="dino-charge" cx="107" cy="90" r="15" fill="url(#eye-glow-grad)" opacity="0"/>
+                </g>
+
+                <!-- Laser beams firing from eyes toward top-left -->
+                <g class="dino-laser" filter="url(#laser-glow)">
+                    <line x1="75" y1="88" x2="-60" y2="-10"
+                          stroke="#0E0E0E" stroke-width="14" stroke-linecap="round"/>
+                    <line x1="75" y1="88" x2="-60" y2="-10"
+                          stroke="#FF2D4C" stroke-width="10" stroke-linecap="round"/>
+                    <line x1="75" y1="88" x2="-60" y2="-10"
+                          stroke="#FFD60A" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="107" y1="90" x2="-30" y2="30"
+                          stroke="#0E0E0E" stroke-width="14" stroke-linecap="round"/>
+                    <line x1="107" y1="90" x2="-30" y2="30"
+                          stroke="#FF2D4C" stroke-width="10" stroke-linecap="round"/>
+                    <line x1="107" y1="90" x2="-30" y2="30"
+                          stroke="#FFD60A" stroke-width="4" stroke-linecap="round"/>
+
+                    <!-- Sparkles at origin -->
+                    <circle cx="75" cy="88" r="12" fill="#FFD60A" opacity=".6">
+                        <animate attributeName="r" values="8;15;8" dur="0.2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="107" cy="90" r="12" fill="#FFD60A" opacity=".6">
+                        <animate attributeName="r" values="8;15;8" dur="0.2s" repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- ZAP! comic text -->
+                <g class="dino-zap">
+                    <text x="-10" y="35" font-family="Bungee, sans-serif" font-size="34"
+                          fill="#FFD60A" stroke="#0E0E0E" stroke-width="3" paint-order="stroke"
+                          transform="rotate(-14 0 25)">ZAP!</text>
+                </g>
+
+                <!-- Pixel sunglasses (drop from sky, stepped) -->
+                <g class="dino-glasses">
+                    <rect x="56" y="80" width="40" height="20" fill="#0E0E0E"/>
+                    <rect x="58" y="78" width="40" height="2" fill="#0E0E0E"/>
+                    <rect x="54" y="82" width="2" height="16" fill="#0E0E0E"/>
+                    <rect x="100" y="82" width="26" height="18" fill="#0E0E0E"/>
+                    <rect x="102" y="80" width="24" height="2" fill="#0E0E0E"/>
+                    <rect x="126" y="84" width="2" height="14" fill="#0E0E0E"/>
+                    <rect x="96" y="88" width="6" height="4" fill="#0E0E0E"/>
+                    <rect x="62" y="84" width="6" height="3" fill="#FFF5DC"/>
+                    <rect x="68" y="87" width="3" height="3" fill="#FFF5DC"/>
+                    <rect x="106" y="86" width="5" height="3" fill="#FFF5DC"/>
+                </g>
+
+                <!-- DEAL WITH IT banner -->
+                <g class="dino-deal">
+                    <g transform="rotate(-6 160 20)">
+                        <rect x="30" y="2" width="260" height="44" fill="#FFD60A" stroke="#0E0E0E" stroke-width="3"/>
+                        <text x="160" y="33" text-anchor="middle"
+                              font-family="Bungee, sans-serif" font-size="26"
+                              fill="#0E0E0E">DEAL WITH IT!</text>
+                    </g>
+                </g>
+            </svg>
+        </div>
         <div class="container">
             <div class="hero-content">
                 <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 9999px; margin-bottom: 2rem; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <span style="display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e;"></span>
-                    100% Open Source
+                    The Open Ecosystem for Enterprise AI
                 </div>
-                <h1 class="hero-title">
-                    Orchestrate AI workflows<br>
-                    with <span class="gradient-text">precision</span>
-                </h1>
+                
+                <div style="position: relative; display: inline-block;">
+                    <h1 class="hero-title">
+                        Master your AI<br>
+                        <span class="gradient-text">at scale</span>
+                    </h1>
+                    <!-- Pop decorations (moved) -->
+                    <div class="hero-starburst" aria-hidden="true">
+                        <span><small>FREE FOREVER BECAUSE OSS ROCKS!</small></span>
+                    </div>
+                </div>
                 <p class="hero-subtitle">
-                    The deterministic, production-grade framework for verifiable AI execution. 
-                    Built in Go for extreme speed. Agnostic to LLM providers.
+                    AWF is a professional ecosystem designed to give companies full control over their AI integration.
+                    From local orchestration to global production workflows.
                 </p>
                 <div class="hero-cta">
-                    <a href="https://github.com/awf-project/cli" class="btn btn-primary">
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="github-icon" aria-hidden="true">
-                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                        </svg>
-                        View on GitHub
+                    <a href="#pillars" class="btn btn-primary">
+                        Explore the ecosystem
                     </a>
-                    <a href="#start-building" class="btn btn-secondary">
-                        Get started
+                    <a href="#cli" class="btn btn-secondary">
+                        Try the CLI
                     </a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Social Proof / Stats -->
-    <section class="stats-section">
+    <!-- Core Pillars Section -->
+    <section id="pillars" class="problem-section">
         <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="stat-value">100%</span>
-                    <span class="stat-label">Deterministic</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">Zero</span>
-                    <span class="stat-label">Vendor Lock-in</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">Go</span>
-                    <span class="stat-label">Powered Engine</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Problem section - storytelling -->
-    <section id="problem" class="problem-section">
-        <div class="container">
-            <div class="problem-content">
-                <h2 class="section-title">The problem with AI workflows today</h2>
-                <div class="problem-statements">
-                    <div class="problem-item">
-                        <span class="problem-number">01</span>
-                        <div class="problem-text">
-                            <h3>Unreliable execution</h3>
-                            <p>AI workflows fail silently. No audit trail. No reproducibility.</p>
-                        </div>
+            <h2 class="section-title">The Three Pillars of AWF</h2>
+            <div class="problem-statements">
+                <div class="problem-item">
+                    <span class="problem-number">01</span>
+                    <div class="problem-text">
+                        <h3>AI Mastery</h3>
+                        <p>Total control over your prompts, data, and models. AWF ensures that AI serves your business logic, not the other way around, by providing a vendor-agnostic foundation.</p>
                     </div>
-                    <div class="problem-item">
-                        <span class="problem-number">02</span>
-                        <div class="problem-text">
-                            <h3>Vendor lock-in</h3>
-                            <p>Switching LLM providers means rewriting your entire workflow.</p>
-                        </div>
+                </div>
+                <div class="problem-item">
+                    <span class="problem-number">02</span>
+                    <div class="problem-text">
+                        <h3>Unmatched Scalability</h3>
+                        <p>Designed for the enterprise. Whether you run ten or ten million workflows, our Go-powered engine handles the load with extreme efficiency and minimal overhead.</p>
                     </div>
-                    <div class="problem-item">
-                        <span class="problem-number">03</span>
-                        <div class="problem-text">
-                            <h3>Production nightmares</h3>
-                            <p>No validation, no monitoring, no guarantees for production use.</p>
-                        </div>
+                </div>
+                <div class="problem-item">
+                    <span class="problem-number">03</span>
+                    <div class="problem-text">
+                        <h3>Full Observability</h3>
+                        <p>Every token tracked, every step recorded. AWF provides deterministic execution and deep audit trails, making your AI workflows as predictable as traditional software.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Solution section - visual flow -->
-    <section id="solution" class="solution-section">
+    <!-- Product Introduction -->
+    <section id="cli" class="solution-section">
         <div class="container">
             <div class="solution-content">
-                <h2 class="section-title">AWF transforms AI workflows</h2>
+                <div style="text-align: center; margin-bottom: 4rem;">
+                    <div style="display: inline-block; padding: 4px 12px; background: #eff6ff; color: #3b82f6; border-radius: 999px; font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem; text-transform: uppercase;">Product Spotlight</div>
+                    <h2 class="section-title" style="margin-bottom: 1rem;">AWF CLI</h2>
+                    <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">The foundation of the ecosystem. A lightweight, powerful tool to build and run AI workflows from your terminal.</p>
+                </div>
+
                 <div class="solution-grid">
                     <div class="solution-item">
                         <div class="solution-number">01</div>
                         <div class="solution-content-wrapper">
                             <h3 class="solution-title">Lightning Fast</h3>
-                            <p class="solution-text">Written in Go for blazing performance. Every millisecond counts.</p>
+                            <p class="solution-text">Written in Go for blazing performance. Every millisecond counts in production.</p>
                         </div>
                     </div>
                     <div class="solution-item">
                         <div class="solution-number">02</div>
                         <div class="solution-content-wrapper">
                             <h3 class="solution-title">Provider Agnostic</h3>
-                            <p class="solution-text">Switch between OpenAI, Anthropic, Mistral without changing workflows.</p>
+                            <p class="solution-text">Switch between OpenAI, Anthropic, or local LLMs without changing a line of code.</p>
                         </div>
                     </div>
                     <div class="solution-item">
                         <div class="solution-number">03</div>
                         <div class="solution-content-wrapper">
-                            <h3 class="solution-title">Production Ready</h3>
-                            <p class="solution-text">Audit, validate, and verify every step. Built for reliability.</p>
+                            <h3 class="solution-title">YAML Native</h3>
+                            <p class="solution-text">Define workflows in simple, version-controllable files. Human readable, machine precise.</p>
                         </div>
                     </div>
                     <div class="solution-item">
                         <div class="solution-number">04</div>
                         <div class="solution-content-wrapper">
-                            <h3 class="solution-title">Fully Extensible</h3>
-                            <p class="solution-text">Custom plugins and step types. Make it yours.</p>
+                            <h3 class="solution-title">Production Ready</h3>
+                            <p class="solution-text">Built-in validation and error handling for mission-critical deployments.</p>
                         </div>
                     </div>
+                </div>
+                <div style="text-align: center; margin-top: 3rem;">
+                    <a href="#start-building" class="btn btn-primary">Get Started with AWF CLI</a>
                 </div>
             </div>
         </div>
@@ -262,9 +442,9 @@ Steps executed:
     <section id="start-building" class="start-building-section">
         <div class="container">
             <div class="start-building-content">
-                <h2 class="section-title">Start Building</h2>
+                <h2 class="section-title">Get Started with AWF CLI</h2>
                 <p class="start-building-description">
-                    Get up and running in seconds. Choose your preferred installation method.
+                    The core engine of the AWF ecosystem. Install it in seconds and start building.
                 </p>
 
                 <!-- Tab navigation -->
@@ -489,7 +669,7 @@ make install</code></pre>
             menuToggle.addEventListener('click', () => {
                 navLinks.classList.toggle('active');
                 menuToggle.classList.toggle('active');
-                
+
                 // Prevent scrolling when menu is open
                 document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
             });
@@ -525,7 +705,7 @@ make install</code></pre>
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabName = btn.getAttribute('data-tab');
-                
+
                 // Update ARIA attributes and classes
                 tabBtns.forEach(b => {
                     const isActive = b === btn;
@@ -542,22 +722,22 @@ make install</code></pre>
 
         // Copy to clipboard functionality
         const copyBtns = document.querySelectorAll('.copy-btn');
-        
+
         copyBtns.forEach(btn => {
             btn.addEventListener('click', async () => {
                 const codeBlock = btn.parentElement.querySelector('code');
                 const code = codeBlock.textContent;
-                
+
                 try {
                     await navigator.clipboard.writeText(code);
-                    
+
                     // Show copied feedback
                     btn.classList.add('copied');
                     const tooltip = btn.querySelector('.copy-tooltip');
                     if (tooltip) {
                         tooltip.textContent = 'Copied!';
                     }
-                    
+
                     setTimeout(() => {
                         btn.classList.remove('copied');
                         if (tooltip) {
