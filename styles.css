@@ -106,6 +106,7 @@ body::before {
   gap: 1rem;
 }
 .logo {
+  display: inline-block;
   font-family: var(--f-pop);
   font-size: 2rem;
   color: var(--ink);
@@ -116,6 +117,7 @@ body::before {
   box-shadow: 3px 3px 0 var(--red), 6px 6px 0 var(--ink);
   transform: rotate(-2deg);
   transition: transform .2s ease;
+  cursor: pointer;
 }
 .logo:hover { transform: rotate(2deg) scale(1.05); }
 
@@ -273,11 +275,54 @@ body::before {
   border: var(--bw-thick) solid var(--ink);
   box-shadow: 8px 8px 0 var(--ink);
   transform: rotate(-2deg);
+  transform-origin: center;
   margin-top: .3rem;
   text-shadow: none;
   -webkit-text-fill-color: var(--paper);
   background-clip: unset;
   -webkit-background-clip: unset;
+  cursor: default;
+  will-change: transform, filter;
+  animation: at-scale-laserhit 5s infinite;
+}
+
+/* Synced with .dino-laser (laser-seq 5s): vibrates for the entire firing window 26%-58% */
+@keyframes at-scale-laserhit {
+  /* Calm before the strike */
+  0%, 24%   { transform: rotate(-2deg) scale(1); filter: none; }
+
+  /* Initial impact */
+  26%       { transform: rotate(-14deg) scale(1.14);
+               filter: drop-shadow(0 0 22px #FFD60A) drop-shadow(0 0 10px #FF2D4C); }
+  28%       { transform: rotate(7deg)   scale(1.08);
+               filter: drop-shadow(0 0 14px #FFD60A); }
+
+  /* Sustained laser — continuous vibration, synced with the flicker */
+  30%       { transform: rotate(-11deg) scale(1.10);
+               filter: drop-shadow(0 0 20px #FFD60A) drop-shadow(0 0 8px #FF2D4C); }
+  33%       { transform: rotate(8deg)   scale(1.07);
+               filter: drop-shadow(0 0 16px #FFD60A); }
+  36%       { transform: rotate(-9deg)  scale(1.08);
+               filter: drop-shadow(0 0 18px #FFD60A); }
+  40%       { transform: rotate(6deg)   scale(1.06);
+               filter: drop-shadow(0 0 14px #FFD60A); }
+  44%       { transform: rotate(-7deg)  scale(1.07);
+               filter: drop-shadow(0 0 16px #FFD60A); }
+  48%       { transform: rotate(5deg)   scale(1.05);
+               filter: drop-shadow(0 0 12px #FFD60A); }
+  52%       { transform: rotate(-6deg)  scale(1.06);
+               filter: drop-shadow(0 0 14px #FFD60A); }
+  56%       { transform: rotate(4deg)   scale(1.04);
+               filter: drop-shadow(0 0 10px #FFD60A); }
+
+  /* Laser cut — snap back to rest */
+  58%       { transform: rotate(-4deg)  scale(1.02);
+               filter: drop-shadow(0 0 6px #FFD60A); }
+  60%, 100% { transform: rotate(-2deg)  scale(1); filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text { animation: none; }
 }
 
 .hero-subtitle {
@@ -1322,4 +1367,163 @@ body::before {
   .gradient-text { padding: .04em .18em .08em; }
   .btn { padding: .85rem 1.2rem; font-size: .9rem; }
   .btn-lg { padding: 1rem 1.4rem; font-size: 1rem; }
+}
+
+/* ---------- Utility classes (replaces former inline styles) ---------- */
+.eco-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  margin-bottom: 2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+.eco-badge-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #22c55e;
+}
+.hero-title-wrap {
+  position: relative;
+  display: inline-block;
+}
+.spotlight-intro {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+.spotlight-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+.spotlight-intro .section-title {
+  margin-bottom: 1rem;
+}
+.spotlight-lead {
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+.spotlight-cta {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+/* ---------- Ecosystem (two-product showcase) ---------- */
+.ecosystem-section {
+  padding: 6rem 0;
+  position: relative;
+}
+.ecosystem-intro {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 3.5rem;
+}
+.ecosystem-intro .section-title { margin-bottom: 1rem; }
+.ecosystem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.ecosystem-card {
+  position: relative;
+  padding: 2.5rem;
+  border: var(--bw-thick) solid var(--ink);
+  box-shadow: var(--sh-2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.ecosystem-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 12px 12px 0 var(--ink);
+}
+.ecosystem-card--cli { background: var(--lilac); }
+.ecosystem-card--mcp { background: var(--mint); }
+.ecosystem-card::after {
+  content: '';
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 32px;
+  height: 32px;
+  background: var(--red);
+  border: var(--bw) solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.ecosystem-card--mcp::after { background: var(--blue); }
+.ecosystem-card__eyebrow {
+  font-family: var(--f-pop);
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink);
+  opacity: .85;
+}
+.ecosystem-card__title {
+  font-family: var(--f-display);
+  font-size: clamp(2rem, 4.2vw, 2.8rem);
+  line-height: 1;
+  color: var(--ink);
+  margin: 0;
+}
+.ecosystem-card__lead {
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.ecosystem-card__features {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+}
+.ecosystem-card__features li {
+  padding-left: 1.6rem;
+  position: relative;
+  font-size: .95rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.ecosystem-card__features li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--red);
+  font-weight: 700;
+}
+.ecosystem-card--mcp .ecosystem-card__features li::before { color: var(--blue); }
+.ecosystem-card__cta {
+  display: flex;
+  gap: .75rem;
+  margin-top: auto;
+  padding-top: .75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+  .ecosystem-section { padding: 4rem 0; }
+  .ecosystem-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .ecosystem-card { padding: 2rem; }
 }
