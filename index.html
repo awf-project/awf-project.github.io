@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AWF - AI Workflow Framework</title>
     <meta name="description" content="AWF (AI Workflow Framework) - An open-source, multi-provider, and lightweight framework for orchestrating reproducible and verifiable AI workflows in production.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="theme-color" content="#FFD60A">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,7 +25,16 @@
                     <a href="#pillars">Pillars</a>
                     <a href="#cli">The CLI</a>
                     <a href="#mcp">The MCP</a>
-                    <a href="https://awf-project.github.io/cli" target="_blank">Documentation</a>
+                    <div class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-trigger" aria-haspopup="menu" aria-expanded="false">
+                            Documentation
+                            <span class="nav-dropdown-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <ul class="nav-dropdown-menu" role="menu">
+                            <li role="none"><a role="menuitem" href="https://awf-project.ai/cli/" target="_blank">CLI Documentation</a></li>
+                            <li role="none"><a role="menuitem" href="https://awf-project.ai/zpm/" target="_blank">MCP Documentation</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -240,8 +251,8 @@
                     </div>
                 </div>
                 <p class="hero-subtitle">
-                    AWF is a professional ecosystem designed to give companies full control over their AI integration.
-                    From local orchestration to global production workflows.
+                    AWF is a professional ecosystem designed to give engineers full control over their AI integration.
+                    From local orchestration to global production.
                 </p>
                 <div class="hero-cta">
                     <a href="#ecosystem" class="btn btn-primary">
@@ -260,9 +271,9 @@
 
     <!-- Ecosystem: two products -->
     <section id="ecosystem" class="ecosystem-section">
+        <div class="chapter-label">Chapter 01 &mdash; The Ecosystem</div>
         <div class="container">
             <div class="ecosystem-intro">
-                <div class="spotlight-tag">The Ecosystem</div>
                 <h2 class="section-title">Two products, one ecosystem</h2>
                 <p class="spotlight-lead">AWF CLI orchestrates your AI workflows. ZPM gives your agents a memory they can reason over. Use one, use both &mdash; they're designed to work together.</p>
             </div>
@@ -301,40 +312,115 @@
 
     <!-- Core Pillars Section -->
     <section id="pillars" class="problem-section">
+        <div class="chapter-label">Chapter 02 &mdash; The Pillars</div>
         <div class="container">
             <h2 class="section-title">The Three Pillars of AWF</h2>
             <div class="problem-statements">
                 <div class="problem-item">
                     <span class="problem-number">01</span>
                     <div class="problem-text">
-                        <h3>AI Mastery</h3>
-                        <p>Total control over your prompts, data, and models. AWF ensures that AI serves your business logic, not the other way around, by providing a vendor-agnostic foundation.</p>
+                        <h3>Open by Design</h3>
+                        <p>Vendor-agnostic at the orchestration layer &mdash; OpenAI, Claude, Gemini, Ollama &mdash; and protocol-open at the reasoning layer via MCP. Zero lock-in, OSS end-to-end.</p>
                     </div>
                 </div>
                 <div class="problem-item">
                     <span class="problem-number">02</span>
                     <div class="problem-text">
-                        <h3>Unmatched Scalability</h3>
-                        <p>Designed for the enterprise. Whether you run ten or ten million workflows, our Go-powered engine handles the load with extreme efficiency and minimal overhead.</p>
+                        <h3>Deterministic AI</h3>
+                        <p>CLI workflows replay identically on the same inputs; ZPM deductions are provable through Prolog inference chains. AI becomes as predictable as the rest of your stack.</p>
                     </div>
                 </div>
                 <div class="problem-item">
                     <span class="problem-number">03</span>
                     <div class="problem-text">
-                        <h3>Full Observability</h3>
-                        <p>Every token tracked, every step recorded. AWF provides deterministic execution and deep audit trails, making your AI workflows as predictable as traditional software.</p>
+                        <h3>Production-Grade</h3>
+                        <p>Go and Zig, two static binaries, zero runtime dependencies. Structured logs, audit trails, and proof explanations across both products. Built for enterprise, not demos.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Product Introduction -->
-    <section id="cli" class="solution-section">
+    <!-- Why you should use it -->
+    <section id="why" class="solution-section">
+        <div class="chapter-label">Chapter 03 &mdash; Why It Matters</div>
         <div class="container">
             <div class="solution-content">
                 <div class="spotlight-intro">
-                    <div class="spotlight-tag">Product Spotlight</div>
+                    <h2 class="section-title">What you actually get</h2>
+                    <p class="spotlight-lead">Concrete problems the ecosystem solves, in plain terms.</p>
+                </div>
+                <div class="solution-grid">
+                    <div class="solution-item">
+                        <div class="solution-number">01</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Ship in days, not months</h3>
+                            <p class="solution-text">Workflows in YAML, one static binary, zero SDK sprawl. Install, write, run &mdash; today.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">02</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Your AI bill stops being opaque</h3>
+                            <p class="solution-text">Every token tracked per step, per workflow, per run. Audit spend line by line &mdash; catch runaway agents before they run away.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">03</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Swap providers without a rewrite</h3>
+                            <p class="solution-text">OpenAI raising prices? Switch to Claude. Need privacy? Drop in Ollama. Edit one line of YAML &mdash; your workflows don't care.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">04</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Explain every AI decision to audit</h3>
+                            <p class="solution-text">CLI workflows replay identically. ZPM proves each conclusion through explicit inference chains. "Why did the AI say X?" finally has an answer.</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">05</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Stop your agents from making stuff up</h3>
+                            <p class="solution-text">Give LLMs a knowledge base that reasons. Facts persist, rules apply, contradictions surface. "The AI hallucinated" becomes "the assumption was wrong".</p>
+                        </div>
+                    </div>
+                    <div class="solution-item">
+                        <div class="solution-number">06</div>
+                        <div class="solution-content-wrapper">
+                            <h3 class="solution-title">Run in prod without a DevOps team</h3>
+                            <p class="solution-text">Two static binaries, zero runtime dependencies. Docker if you want, bare metal if you prefer. Any CI, any server, any laptop.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real reasons (comic sidekick to #why) -->
+    <section class="real-reasons-section">
+        <div class="container">
+            <h2 class="section-title">&hellip;or, let's be honest</h2>
+            <p class="real-reasons-intro">The reasons you'll actually end up installing it tonight.</p>
+            <ul class="real-reasons-list">
+                <li>Your engineers were tired yesterday and prompted worse.</li>
+                <li>You read a wild thread on Reddit last Friday at 1 a.m.</li>
+                <li>Your last AI demo segfaulted in front of the CEO.</li>
+                <li>Accounting cried at the last vendor invoice.</li>
+                <li>Your prompt is now 4,000 lines and nobody owns it.</li>
+                <li>&ldquo;ChatGPT said so&rdquo; is not an architecture diagram.</li>
+                <li>The all-hands deck has the word <em>agentic</em> on slide 3.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Product Introduction -->
+    <section id="cli" class="solution-section">
+        <div class="chapter-label">Chapter 04 &mdash; The CLI</div>
+        <div class="container">
+            <div class="solution-content">
+                <div class="spotlight-intro">
                     <h2 class="section-title">AWF CLI</h2>
                     <p class="spotlight-lead">The foundation of the ecosystem. A lightweight, powerful tool to build and run AI workflows from your terminal.</p>
                 </div>
@@ -429,6 +515,63 @@
                 <p class="code-description">
                     Define your entire workflow in a single YAML file. Human-readable, version-controllable, and production-ready.
                 </p>
+
+                <div class="pro-features">
+                    <div class="pro-features-header">
+                        <span class="pro-features-tag">Built for pros</span>
+                        <h3 class="pro-features-heading">When the demo ends and production begins</h3>
+                    </div>
+                    <div class="pro-features-grid">
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Loops</span>
+                            <h4 class="pro-feature__title">For-each &amp; while</h4>
+                            <p class="pro-feature__desc">Iterate over arrays, file lists, or API results with full workflow context inside each iteration.</p>
+                            <code class="pro-feature__cmd">type: foreach</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Conversations</span>
+                            <h4 class="pro-feature__title">Multi-turn agents</h4>
+                            <p class="pro-feature__desc">Native session resume on Claude, Codex, Gemini, OpenCode. Token tracking and context injection across turns.</p>
+                            <code class="pro-feature__cmd">type: conversation</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Resume</span>
+                            <h4 class="pro-feature__title">Pick up where it crashed</h4>
+                            <p class="pro-feature__desc">Every run has an ID. Interrupt it, fix it, resume from the failed step &mdash; no need to start over.</p>
+                            <code class="pro-feature__cmd">awf resume &lt;id&gt;</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Sub-workflows</span>
+                            <h4 class="pro-feature__title">Compose like functions</h4>
+                            <p class="pro-feature__desc">Call one workflow from another with typed input/output mapping. Build libraries of reusable pipelines.</p>
+                            <code class="pro-feature__cmd">type: call_workflow</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Parallel</span>
+                            <h4 class="pro-feature__title">Fan out without fan-pain</h4>
+                            <p class="pro-feature__desc">Run multiple steps concurrently with configurable strategies &mdash; all, any, race. Collect results in one place.</p>
+                            <code class="pro-feature__cmd">type: parallel</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Retry</span>
+                            <h4 class="pro-feature__title">Backoff, baked in</h4>
+                            <p class="pro-feature__desc">Exponential, linear, or constant backoff per step. Flaky APIs and rate limits stop waking you up at 3&nbsp;a.m.</p>
+                            <code class="pro-feature__cmd">retry: {strategy: exponential}</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Diagrams</span>
+                            <h4 class="pro-feature__title">Export the state machine</h4>
+                            <p class="pro-feature__desc">Generate Graphviz DOT for any workflow. Render it, ship it to architecture docs, impress the auditor.</p>
+                            <code class="pro-feature__cmd">awf diagram &lt;workflow&gt;</code>
+                        </div>
+                        <div class="pro-feature">
+                            <span class="pro-feature__name">Audit trail</span>
+                            <h4 class="pro-feature__title">JSONL, secrets masked</h4>
+                            <p class="pro-feature__desc">Paired start/end entries per step, atomic writes, secret redaction, replayable history. Compliance happy.</p>
+                            <code class="pro-feature__cmd">awf history</code>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -571,17 +714,161 @@ make install</code></pre>
                     </div>
                 </div>
 
-
+                <div class="install-github">
+                    <a href="https://github.com/awf-project/cli" target="_blank" rel="noopener" class="install-github-link">
+                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.04c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.27-5.23-5.68 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.42-2.69 5.39-5.25 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56C20.22 21.39 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+                        </svg>
+                        <span>View awf-project/cli on GitHub</span>
+                    </a>
+                </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Integrations - Ecosystem focus (CLI-scoped) -->
+    <section class="integrations-section">
+        <div class="container">
+            <h2 class="section-title">Seamlessly integrates with your ecosystem</h2>
+            <p class="integrations-description">
+                The AWF CLI isn't just another walled garden. It leverages the tools and AI providers you already use and trust.
+            </p>
+            <div class="integrations-grid">
+                <!-- AI Providers -->
+                <div class="integration-item">
+                    <img src="logos/openai.svg" alt="OpenAI" class="integration-logo" width="80" height="80">
+                    <span>OpenAI</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/claude.svg" alt="Claude" class="integration-logo" width="80" height="80">
+                    <span>Claude</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/gemini.svg" alt="Gemini" class="integration-logo" width="80" height="80">
+                    <span>Gemini</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/opencode.svg" alt="OpenCode" class="integration-logo" width="80" height="80">
+                    <span>OpenCode</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/ollama.svg" alt="Ollama" class="integration-logo" width="80" height="80">
+                    <span>Ollama</span>
+                </div>
+                <!-- Core Tools -->
+                <div class="integration-item">
+                    <img src="logos/bash.svg" alt="Bash" class="integration-logo" width="80" height="80">
+                    <span>Bash</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/git.svg" alt="Git" class="integration-logo" width="80" height="80">
+                    <span>Git</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/docker.svg" alt="Docker" class="integration-logo" width="80" height="80">
+                    <span>Docker</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/php.svg" alt="PHP" class="integration-logo" width="80" height="80">
+                    <span>PHP</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/python.svg" alt="Python" class="integration-logo" width="80" height="80">
+                    <span>Python</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/slack.svg" alt="Slack" class="integration-logo" width="80" height="80">
+                    <span>Slack</span>
+                </div>
+                <div class="integration-item">
+                    <img src="logos/jira-cli.svg" alt="Jira" class="integration-logo" width="80" height="80">
+                    <span>Jira</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Toolbox - Core CLI tools list -->
+    <section class="toolbox-section">
+        <div class="container">
+            <h2 class="section-title">...and every other tool in your terminal</h2>
+            <div class="toolbox-grid">
+                <span class="tool-tag">gh</span>
+                <span class="tool-tag">rtk</span>
+                <span class="tool-tag">jq</span>
+                <span class="tool-tag">grepai</span>
+                <span class="tool-tag">make</span>
+                <span class="tool-tag">curl</span>
+                <span class="tool-tag">ripgrep</span>
+                <span class="tool-tag">sed</span>
+                <span class="tool-tag">awk</span>
+                <span class="tool-tag">tree-sitter</span>
+                <span class="tool-tag">npm</span>
+                <span class="tool-tag">go</span>
+                <span class="tool-tag">cargo</span>
+                <span class="tool-tag">composer</span>
+                <span class="tool-tag">cat</span>
+                <span class="tool-tag">grep</span>
+                <span class="tool-tag">find</span>
+            </div>
+            <p class="toolbox-description">
+                If it's in your PATH, it's in your workflow. The CLI orchestrates any CLI utility with zero configuration.
+            </p>
+        </div>
+    </section>
+
+    <!-- Plugins & Workflow Packs (CLI extensibility) -->
+    <section class="extend-section">
+        <div class="chapter-label">Chapter 05 &mdash; Extend It</div>
+        <div class="container">
+            <div class="extend-intro">
+                <h2 class="section-title">Plugins &amp; Workflow Packs</h2>
+                <p class="spotlight-lead">The CLI is a platform, not just a tool. Write your own step types or share a whole workflow as a reusable pack.</p>
+            </div>
+            <div class="extend-grid">
+                <article class="extend-card extend-card--plugins">
+                    <div class="extend-card__tag">Plugins</div>
+                    <h3 class="extend-card__title">Write your own step types</h3>
+                    <p class="extend-card__lead">Plugins add new primitives to the workflow DSL &mdash; inject real-time data, call internal APIs, run custom tools. Distribute them as binaries, load them from anywhere.</p>
+                    <ul class="extend-card__examples">
+                        <li>
+                            <a href="https://github.com/awf-project/awf-plugin-time" target="_blank" rel="noopener">
+                                <code>awf-plugin-time</code>
+                                <span class="extend-card__example-desc">system date/time injection</span>
+                            </a>
+                        </li>
+                    </ul>
+                </article>
+                <article class="extend-card extend-card--packs">
+                    <div class="extend-card__tag">Workflow Packs</div>
+                    <h3 class="extend-card__title">Clone ready-made workflows</h3>
+                    <p class="extend-card__lead">Packs bundle a complete YAML workflow with its prompts and helpers. Install a pack, run it, or fork it as a starting point for yours.</p>
+                    <ul class="extend-card__examples">
+                        <li>
+                            <a href="https://github.com/awf-project/awf-workflow-hello" target="_blank" rel="noopener">
+                                <code>awf-workflow-hello</code>
+                                <span class="extend-card__example-desc">starter pack</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/awf-project/awf-workflow-speckit" target="_blank" rel="noopener">
+                                <code>awf-workflow-speckit</code>
+                                <span class="extend-card__example-desc">Speckit spec-driven workflow</span>
+                            </a>
+                        </li>
+                    </ul>
+                </article>
+            </div>
+            <p class="extend-footnote">Built your own? Tag your repo <a href="https://github.com/topics/awf-plugin" target="_blank" rel="noopener"><code>awf-plugin</code></a> or <a href="https://github.com/topics/awf-workflow" target="_blank" rel="noopener"><code>awf-workflow</code></a> on GitHub to get discovered.</p>
         </div>
     </section>
 
     <!-- Product Introduction: ZPM MCP -->
     <section id="mcp" class="solution-section">
+        <div class="chapter-label">Chapter 06 &mdash; The MCP</div>
         <div class="container">
             <div class="solution-content">
                 <div class="spotlight-intro">
-                    <div class="spotlight-tag">Product Spotlight</div>
                     <h2 class="section-title">AWF MCP &mdash; ZPM</h2>
                     <p class="spotlight-lead">The reasoning layer of the ecosystem. A Zig-powered MCP server that gives LLMs deterministic logical reasoning through an embedded Prolog engine.</p>
                 </div>
@@ -756,98 +1043,54 @@ make build</code></pre>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Integrations - Ecosystem focus -->
-    <section class="integrations-section">
-        <div class="container">
-            <h2 class="section-title">Seamlessly integrates with your ecosystem</h2>
-            <p class="integrations-description">
-                AWF isn't just another walled garden. It leverages the tools and AI providers you already use and trust.
-            </p>
-            <div class="integrations-grid">
-                <!-- AI Providers -->
-                <div class="integration-item">
-                    <img src="logos/openai.svg" alt="OpenAI" class="integration-logo" width="80" height="80">
-                    <span>OpenAI</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/claude.svg" alt="Claude" class="integration-logo" width="80" height="80">
-                    <span>Claude</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/gemini.svg" alt="Gemini" class="integration-logo" width="80" height="80">
-                    <span>Gemini</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/opencode.svg" alt="OpenCode" class="integration-logo" width="80" height="80">
-                    <span>OpenCode</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/ollama.svg" alt="Ollama" class="integration-logo" width="80" height="80">
-                    <span>Ollama</span>
-                </div>
-                <!-- Core Tools -->
-                <div class="integration-item">
-                    <img src="logos/bash.svg" alt="Bash" class="integration-logo" width="80" height="80">
-                    <span>Bash</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/git.svg" alt="Git" class="integration-logo" width="80" height="80">
-                    <span>Git</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/docker.svg" alt="Docker" class="integration-logo" width="80" height="80">
-                    <span>Docker</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/php.svg" alt="PHP" class="integration-logo" width="80" height="80">
-                    <span>PHP</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/python.svg" alt="Python" class="integration-logo" width="80" height="80">
-                    <span>Python</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/slack.svg" alt="Slack" class="integration-logo" width="80" height="80">
-                    <span>Slack</span>
-                </div>
-                <div class="integration-item">
-                    <img src="logos/jira-cli.svg" alt="Jira" class="integration-logo" width="80" height="80">
-                    <span>Jira</span>
+                <div class="install-github">
+                    <a href="https://github.com/awf-project/zpm" target="_blank" rel="noopener" class="install-github-link">
+                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.04c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.27-5.23-5.68 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.42-2.69 5.39-5.25 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56C20.22 21.39 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/>
+                        </svg>
+                        <span>View awf-project/zpm on GitHub</span>
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- The Toolbox - Core CLI tools list -->
-    <section class="toolbox-section">
+    <!-- More of the AWF ecosystem -->
+    <section id="moar" class="moar-section">
+        <div class="chapter-label">Chapter 07 &mdash; The Rest</div>
         <div class="container">
-            <h2 class="section-title">...and every other tool in your terminal</h2>
-            <div class="toolbox-grid">
-                <span class="tool-tag">gh</span>
-                <span class="tool-tag">rtk</span>
-                <span class="tool-tag">jq</span>
-                <span class="tool-tag">grepai</span>
-                <span class="tool-tag">make</span>
-                <span class="tool-tag">curl</span>
-                <span class="tool-tag">ripgrep</span>
-                <span class="tool-tag">sed</span>
-                <span class="tool-tag">awk</span>
-                <span class="tool-tag">tree-sitter</span>
-                <span class="tool-tag">npm</span>
-                <span class="tool-tag">go</span>
-                <span class="tool-tag">cargo</span>
-                <span class="tool-tag">composer</span>
-                <span class="tool-tag">cat</span>
-                <span class="tool-tag">grep</span>
-                <span class="tool-tag">find</span>
+            <div class="moar-intro">
+                <h2 class="section-title">The rest of the toolkit</h2>
+                <p class="spotlight-lead">A small family of projects around the CLI and ZPM &mdash; drop AWF into your agent, your CI, or your dev container.</p>
             </div>
-            <p class="toolbox-description">
-                If it's in your PATH, it's in your workflow. AWF orchestrates any CLI utility with zero configuration.
-            </p>
+            <div class="moar-grid">
+                <a class="moar-card moar-card--red" href="https://github.com/awf-project/awf-marketplace" target="_blank" rel="noopener">
+                    <div class="moar-card__tag">Skill</div>
+                    <h3 class="moar-card__title">awf-marketplace</h3>
+                    <p class="moar-card__lead">The Claude Code marketplace for AWF. Ship AWF to your agent in a click, with curated skills and prompts.</p>
+                    <span class="moar-card__cta">View on GitHub
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.04c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.27-5.23-5.68 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.42-2.69 5.39-5.25 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56C20.22 21.39 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                    </span>
+                </a>
+                <a class="moar-card moar-card--yellow" href="https://github.com/awf-project/setup-awf" target="_blank" rel="noopener">
+                    <div class="moar-card__tag">GitHub Action</div>
+                    <h3 class="moar-card__title">setup-awf</h3>
+                    <p class="moar-card__lead">Install AWF in any GitHub Actions workflow. One step, cached, ready for production CI.</p>
+                    <span class="moar-card__cta">View on GitHub
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.04c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.27-5.23-5.68 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.42-2.69 5.39-5.25 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56C20.22 21.39 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                    </span>
+                </a>
+                <a class="moar-card moar-card--blue" href="https://github.com/awf-project/devcontAIner" target="_blank" rel="noopener">
+                    <div class="moar-card__tag">Dev Container</div>
+                    <h3 class="moar-card__title">devcontAIner</h3>
+                    <p class="moar-card__lead">A Dev Container with the full AWF stack pre-installed. Clone, open in VS Code or JetBrains IDE, start shipping.</p>
+                    <span class="moar-card__cta">View on GitHub
+                        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56v-2.04c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.68-1.27-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.74 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.27-5.23-5.68 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.07 0 4.42-2.69 5.39-5.25 5.67.41.35.78 1.04.78 2.1v3.12c0 .31.21.67.8.56C20.22 21.39 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                    </span>
+                </a>
+            </div>
+            <p class="moar-footnote">Explore every repo on <a href="https://github.com/orgs/awf-project/repositories" target="_blank" rel="noopener">github.com/awf-project</a>.</p>
         </div>
     </section>
 
@@ -859,7 +1102,7 @@ make build</code></pre>
                 <p class="cta-text">
                     Dive into the source code and start building production-ready AI workflows with AWF.
                 </p>
-                <a href="https://github.com/awf-project/cli" class="btn btn-primary btn-lg">
+                <a href="https://github.com/awf-project" class="btn btn-primary btn-lg">
                     Explore on GitHub
                 </a>
             </div>
@@ -884,13 +1127,39 @@ make build</code></pre>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>© 2026 AWF Project. <a href="https://github.com/awf-project/cli/blob/main/LICENSE">EUPL-1.2</a> License. Made in 🇫🇷 with ❤️</p>
+                <p>© 2026 AWF Project. Made in 🇫🇷 with ❤️</p>
                 <p>"Every token helps, every token matters."</p>
             </div>
         </div>
     </footer>
 
     <script>
+        // Documentation dropdown
+        document.querySelectorAll('.nav-dropdown').forEach(dd => {
+            const trigger = dd.querySelector('.nav-dropdown-trigger');
+            if (!trigger) return;
+
+            const setOpen = (open) => {
+                dd.dataset.open = open ? 'true' : 'false';
+                trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            };
+
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setOpen(dd.dataset.open !== 'true');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!dd.contains(e.target)) setOpen(false);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') setOpen(false);
+            });
+
+            setOpen(false);
+        });
+
         // Mobile menu toggle
         const menuToggle = document.querySelector('.mobile-menu-toggle');
         const navLinks = document.querySelector('.nav-links');
