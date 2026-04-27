@@ -989,6 +989,8 @@ body::before {
 }
 /* Differentiate MCP install from the adjacent MCP how-section (both were paper) */
 #mcp-install { background: var(--mint); }
+/* ztick install gets its own colour for visual variety with the mint MCP install */
+#ztick-install { background: var(--lilac); }
 
 /* ---------- Pro features grid (below the YAML example) ---------- */
 .pro-features {
@@ -1949,9 +1951,9 @@ body::before {
 .ecosystem-intro .section-title { margin-bottom: 1rem; }
 .ecosystem-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-  max-width: 1100px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 .ecosystem-card {
@@ -1970,6 +1972,7 @@ body::before {
 }
 .ecosystem-card--cli { background: var(--lilac); }
 .ecosystem-card--mcp { background: var(--mint); }
+.ecosystem-card--ztick { background: var(--pink); }
 .ecosystem-card::after {
   content: '';
   position: absolute;
@@ -1983,6 +1986,7 @@ body::before {
   box-shadow: 3px 3px 0 var(--ink);
 }
 .ecosystem-card--mcp::after { background: var(--blue); }
+.ecosystem-card--ztick::after { background: var(--yellow); }
 .ecosystem-card__eyebrow {
   font-family: var(--f-pop);
   font-size: .8rem;
@@ -2026,6 +2030,7 @@ body::before {
   font-weight: 700;
 }
 .ecosystem-card--mcp .ecosystem-card__features li::before { color: var(--blue); }
+.ecosystem-card--ztick .ecosystem-card__features li::before { color: var(--ink); }
 .ecosystem-card__cta {
   display: flex;
   gap: .75rem;
@@ -2034,6 +2039,9 @@ body::before {
   flex-wrap: wrap;
 }
 
+@media (max-width: 1080px) {
+  .ecosystem-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 860px) {
   .ecosystem-section { padding: 4rem 0; }
   .ecosystem-grid { grid-template-columns: 1fr; gap: 1.5rem; }
