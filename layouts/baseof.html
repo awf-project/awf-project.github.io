@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#030407">
+  <title>{{ if not .IsHome }}{{ .Title }} · {{ with .FirstSection }}{{ if and (ne . $) (not .IsHome) }}{{ .Title }} · {{ end }}{{ end }}{{ end }}AWF Documentation</title>
+  {{ with .Description }}<meta name="description" content="{{ . }}">{{ end }}
+  <link rel="canonical" href="{{ .Permalink }}">
+  <link rel="icon" href="{{ "assets/favicon.svg" | relURL }}" type="image/svg+xml">
+  <link rel="preload" href="{{ "assets/geist-latin.woff2" | relURL }}" as="font" type="font/woff2" crossorigin>
+  {{ with resources.Get "docs.css" | minify | fingerprint }}<link rel="stylesheet" href="{{ .RelPermalink }}">{{ end }}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="mast"><div class="shell head-row">
+  <div class="identity"><a class="brand" href="https://awf-project.ai/" aria-label="AWF home"><img src="{{ "assets/favicon.svg" | relURL }}" width="40" height="40" alt="">AWF</a><a class="wordmark" href="{{ site.Home.RelPermalink }}">Docs</a></div>
+  <nav aria-label="Products">{{ range site.Sections }}<a href="{{ .RelPermalink }}" {{ if eq $.FirstSection . }}aria-current="true"{{ end }}>{{ .Title }}</a>{{ end }}</nav>
+  <a class="search-link" href="{{ "search/" | relURL }}">{{ partial "icon.html" "search" }} Search</a>
+</div></header>
+<main id="main">{{ block "main" . }}{{ end }}</main>
+<footer><div class="shell foot"><span>AWF <span class="muted">/ Documentation</span></span><div><a href="https://awf-project.ai/">AWF website</a><a href="https://github.com/awf-project">GitHub</a></div></div></footer>
+</body>
+</html>

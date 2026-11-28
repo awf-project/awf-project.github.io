@@ -1,0 +1,310 @@
+---
+title: "Workspace configuration"
+source: "docs/user-guide/configuration.md"
+aliases: ["/tower/docs/user-guide/workspace-configuration/"]
+---
+
+Tower reads optional project settings from `<workspace>/.tower/config.toml`.
+The parser is strict: malformed TOML and unknown keys fail startup rather than being ignored.
+An absent file uses defaults.
+
+## Initialize without overwriting files
+
+```bash
+tower init
+```
+
+Initialization creates `.tower/config.toml` and `.towerignore` only when the corresponding file
+does not already exist. It preserves existing bytes and does not create an index-completion marker
+or start formatters. If `.towerignore` already exists, initialization retains the established
+refusal to overwrite it; if only the config exists, Tower creates the missing ignore file and
+leaves the config unchanged.
+
+## Canonical sections
+
+Agent memory uses the first-party `agent_memory` sidecar. With the sidecar installed, the omitted
+`[agent_memory]` section uses durable storage and lexical retrieval. To set a startup fallback or
+filter sensitive text before it is stored, add:
+
+```toml
+[agent_memory.storage]
+startup_policy = "fail" # fail, read_only, or in_memory
+
+[[agent_memory.privacy.rules]]
+id = "credential"
+pattern = "(?i)api[_-]?key\\s*[:=]\\s*\\S+"
+action = "reject" # or redact, with a required replacement string
+```
+
+The default `fail` policy does not silently switch stores. `read_only` requires a compatible,
+consistent existing store; `in_memory` permits volatile operation and reports when durable data is
+unavailable. Responses identify the selected `persistence_mode`; mutations report `durable` only
+after a durable commit. Privacy rules are prospective: changing a rule does not scrub existing
+records or external backups. The host owns `.tower/agent_memory/` and chooses its storage namespace.
+See [agent memory](/tower/user-guide/agent-memory.md) for the tool workflow and
+[the MCP reference](/tower/reference/mcp-tools.md#agent-memory-extension-tools) for limits and result codes.
+
+Cross-project read-only queries use the strict `[projects]` section. Each
+`[[projects.queryable]]` entry must declare a unique stable `id`, display `name`,
+and configured workspace `path`. Tower never discovers additional projects.
+
+```toml
+[projects]
+# Bounds locating, spawning, and initializing a configured target daemon.
+# Defaults to 10 seconds; it must be a positive integer.
+external_availability_timeout_secs = 10
+
+[[projects.queryable]]
+id = "api"
+name = "API service"
+path = "../api"
+```
+
+Configured projects remain read-only targets. Duplicate IDs, names, or resolved
+workspace paths fail configuration loading. A temporarily unavailable configured
+path remains listed but a query against it returns a bounded, project-attributed
+error; it does not impair local workspace queries. See [cross-project
+queries](/tower/user-guide/project-queries.md) for the tool workflow and selector rules.
+
+Command execution is opt-in under `[shell]`. When disabled or absent, the
+`tower_run_command` tool is not exposed. Each command is a direct argv entry;
+Tower does not interpret request input as shell syntax, pipelines, redirections,
+or background jobs.
+
+```toml
+[shell]
+enabled = true
+timeout_secs = 30
+stdout_max_bytes = 65536
+stderr_max_bytes = 65536
+
+[[shell.commands]]
+name = "check"
+argv = ["cargo", "check", "--workspace"]
+```
+
+Command names must be unique identifiers beginning with a letter or digit. The
+configured executable and its fixed arguments are combined with request
+arguments. Requests may supply an optional workspace-relative `cwd`; absolute
+paths, traversal, missing directories, files, and symlink escapes are rejected
+before spawning a process. See [running configured commands](/tower/user-guide/shell-commands.md)
+for the MCP request and result contract.
+
+`timeout_secs` must be between 1 and 86,400 seconds. Each output limit must be
+between 1 and 16,777,216 bytes. Unknown fields and invalid values fail startup.
+
+Dependency search roots use the strict `[dependencies]` section. They are indexed
+as a separate, bounded read-only snapshot and are included only when a search
+request explicitly sets `scope.dependencies = true`.
+
+```toml
+[dependencies]
+ignore = ["target/", "*.generated.rs"]
+max_files = 10000
+max_file_bytes = 1048576
+max_total_bytes = 67108864
+
+[[dependencies.roots]]
+id = "library"
+path = "../library-src"
+```
+
+Root paths resolve relative to the workspace, and each root requires a unique
+validated `id`. The limits must be positive. Missing or temporarily unavailable
+roots remain non-fatal and are reported by scoped search results; invalid TOML,
+unknown fields, unsafe roots, invalid ignore rules, duplicate IDs, and invalid
+limits fail startup. See [dependency search](/tower/user-guide/dependency-search.md) for the
+request and result contract.
+
+Native sidecars are controlled by `[extensions]`:
+
+```toml
+[extensions]
+disabled = ["hello"]
+# Optional: request_timeout_secs = 30
+```
+
+`request_timeout_secs` is optional. When omitted, Tower does not apply a finite host-side budget to
+sidecar initialization, requests, or events. When LSP is enabled and this value is present, it must
+be at least two seconds so one second remains for the host response; Tower passes the remaining budget to resident LSP
+sessions for diagnostics. Reference lookup has no implicit index-settling deadline: servers that
+signal readiness are awaited after a new document sync; servers without optional readiness signals
+complete through their LSP response. A diagnostics timeout is returned as `server_timeout` and leaves the
+sidecar available for subsequent calls. The internal `diagnostics_timeout_secs` initialization field
+is generated by Tower; it is not a TOML setting.
+
+Semantic code retrieval is opt-in under `[semantic_context]`:
+
+```toml
+[semantic_context]
+enabled = true
+
+[semantic_context.embedding]
+provider = "openai_compatible"
+base_url = "http://127.0.0.1:11434/v1"
+model = "nomic-embed-text"
+timeout_ms = 30000
+batch_size = 32
+allow_remote = false
+
+[semantic_context.timeouts]
+search_ms = 30000
+# reindex_ms = 900000
+
+[semantic_context.chunking]
+target_bytes = 4096
+overlap_bytes = 512
+max_file_bytes = 2097152
+
+[semantic_context.store]
+backend = "sqlite"
+```
+
+Omitting the section or setting `enabled = false` keeps semantic tools discoverable but returns
+`{"status":"unsupported","reason":"provider_not_configured"}`; no semantic database is opened.
+When enabled, omitted fields use the defaults shown. The service and model must already be available.
+`timeout_ms` bounds each embedding call; `search_ms` bounds a complete interactive operation.
+`reindex_ms` optionally bounds a complete rebuild and startup catch-up; without it, there is no
+semantic rebuild deadline. An explicit `[extensions].request_timeout_secs` can still cap host
+supervision. Changing the model, dimensions, or chunking can require a semantic rebuild.
+
+The only supported store backend is SQLite at `.tower/semantic_context/index.sqlite3`. The optional
+`embedding.dimensions` sets a positive expected vector size; `embedding.api_key_env` names an
+environment variable containing a bearer token. Set `embedding.allow_remote = true` together with
+an explicit HTTPS `base_url` to send workspace code to a non-loopback service. Redirects and URL
+credentials are rejected. See [semantic retrieval](/tower/user-guide/semantic-retrieval.md) for the workflow and
+[MCP tool reference](/tower/reference/mcp-tools.md#semantic-context-extension-tools) for request fields.
+
+Host-owned formatters are configured under `[formatter.tools.<id>]`:
+
+```toml
+[formatter.tools.rustfmt]
+argv = ["rustfmt", "--edition", "2021"]
+extensions = ["rs"]
+# Optional: timeout_secs = 30
+
+[formatter.tools.php-cs-fixer]
+mode = "inplace"
+argv = ["php-cs-fixer", "fix", "{path}"]
+extensions = ["php"]
+```
+
+Formatter modes are `filter` (the default; stdin to stdout) and `inplace` (the host-managed
+temporary file is passed to the command). Use `{path}` where the command needs the file path.
+The generated configuration includes the standard formatter mappings; edit or remove them for a
+project's toolchain.
+
+Linters are configured per language under `[lint.<language>]`. `timeout_secs` is an optional positive
+integer. When omitted, the lint command has no Tower-controlled duration limit. When present, it is
+the maximum time allowed for each lint command, including commands used to prepare or verify a lint
+fix:
+
+```toml
+[lint.rust]
+command = "cargo"
+args = ["clippy", "--message-format=json"]
+timeout_secs = 10
+extensions = ["rs"]
+format = "rustc-json"
+target = "none"
+```
+
+Zero, negative, fractional, non-integer, and unrepresentable values fail configuration loading.
+Tower derives the lint-specific host budget as
+the maximum of any explicitly configured `[extensions].request_timeout_secs` and
+`2 * timeout_secs + 1` seconds for each explicitly limited lint entry. This allows both fix passes
+and response handling. If neither host nor lint limit is configured, lint host supervision has no
+duration limit. The global extension deadline and unrelated extensions are unchanged.
+Set an external MCP client's request deadline above this budget, with room for daemon preparation
+and transport. A workspace-wide lint request can run commands for several files and may need a
+larger client deadline.
+
+Formatter tools use the optional `timeout_secs` field under `[formatter.tools.<id>]`. If omitted,
+Tower does not impose a formatter operation deadline. If set, the explicit budget applies to the
+formatter subprocess and its filter or inplace commit path; process termination and reaping remain
+bounded cleanup safeguards.
+
+Debug language entries may set optional `default_timeout_secs`, and rr recording may set optional
+`record_timeout_secs`. Omitting either leaves that operation without a Tower-controlled duration
+limit; `idle_ttl_secs`, shutdown, and process cleanup remain separate lifecycle controls.
+
+## Operation timeout migration
+
+**BREAKING:** absent operation timeout settings no longer impose finite Tower deadlines. To retain
+previous implicit limits, set the relevant positive values explicitly:
+
+| Operation                                         | Previous implicit limit | Configuration                                                    |
+| ------------------------------------------------- | ----------------------- | ---------------------------------------------------------------- |
+| Host sidecar initialization, requests, and events | 30 seconds              | `request_timeout_secs = 30` under `[extensions]`                 |
+| Lint commands                                     | 2 seconds               | `timeout_secs = 2` under each affected `[lint.<language>]`       |
+| External formatter                                | 30 seconds              | `timeout_secs = 30` under each affected `[formatter.tools.<id>]` |
+| rr recording                                      | 60 seconds              | `record_timeout_secs = 60` under `[debug.record]`                |
+
+LSP also had separate internal 10-second request and 60-second diagnostics limits. These implicit
+limits are removed. Set `[extensions].request_timeout_secs` to bound LSP operations; diagnostics
+receive one second less than that host budget. Debug adapter operations have no implicit default;
+set `[debug.<language>].default_timeout_secs` or a tool-level timeout if needed. Tool-level debug
+and rr timeouts override their configured defaults.
+
+Tower's operation limits are separate from daemon connection and preparation deadlines, debug
+session idle TTL, shutdown escalation, cancellation, crash detection, and process cleanup. External
+clients, language servers, operating systems, and tools may enforce their own limits.
+
+The daemon has separate connection and preparation deadlines. The connection deadline only covers
+locating or spawning the workspace daemon; it does not cancel preparation already owned by that
+daemon. The preparation deadline bounds a workspace-dependent request while reconciliation or
+capability catch-up is still running.
+
+```toml
+[daemon]
+idle_timeout_secs = 30
+connection_timeout_secs = 10
+preparation_timeout_secs = 10
+```
+
+The built-in `ast` and `lsp` sidecars already have readiness families. Additional sidecars can be
+mapped by manifest name to `ast` or `lsp`:
+
+```toml
+[extensions.readiness]
+my_ast_extension = "ast"
+```
+
+`readiness_controls` is for an extension that implements a non-exhaustive public control callable
+while catch-up is in progress. It cannot be configured for the built-in `ast` or `lsp` sidecars.
+
+Other supported top-level sections configure language servers, linters, and debugging. See the
+relevant reference pages and generated comments for their fields. Configuration is strict: unknown
+keys and zero-valued daemon deadlines fail startup.
+
+## Migrate legacy configuration manually
+
+**BREAKING:** the old top-level `[plugins]` schema is no longer accepted. This includes an empty
+table, its `disabled` setting, formatter entries, and files mixing legacy and canonical sections. Startup
+fails before the engine or any sidecar starts, and the file is left unchanged.
+
+Replace extension settings with `[extensions]` (including `disabled`) and formatter entries with
+`[formatter.tools.<id>]`. Do not rely on automatic rewriting: Tower intentionally requires the
+user to review and edit the configuration. After replacing the legacy sections, rerun the daemon;
+malformed TOML and unknown keys remain errors.
+
+## Startup and recovery
+
+The daemon acquires workspace lifetime ownership and binds its local transport before opening the
+index or preparing extensions. This lets `tower mcp` initialize promptly while preparation continues;
+a client timeout does not release daemon ownership or start a competing Sled owner. Use
+`tower status` to inspect the current generation and readiness of the workspace, AST, and LSP
+families.
+
+Workspace-dependent calls are gated independently. During preparation they either wait up to
+`preparation_timeout_secs` or return structured readiness errors. A configured capability that fails
+is reported as degraded or failed; an absent or disabled capability is reported as unavailable.
+
+The daemon reconciles the eligible filesystem inventory with the persisted index on every startup,
+even if a previous scan-completion marker exists. It uses `.towerignore` and the same eligibility
+rules as `tower_reindex`, preserves surviving identities, and reports added, removed, and unchanged
+counts on `stderr`. A failed reconciliation does not expose a partial service; the next startup
+retries the repair.
+
+See [`.towerignore`](/tower/reference/towerignore.md) for visibility rules and
+[the MCP reference](/tower/reference/mcp-tools.md) for the explicit reindex operation.

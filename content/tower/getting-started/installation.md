@@ -1,0 +1,482 @@
+---
+title: "Getting Started"
+description: "Build Tower, configure native extensions, and connect your first MCP client to search and safely edit your workspace."
+slug: "installation"
+weight: 1
+source: "docs/getting-started.md"
+aliases: ["/tower/docs/getting-started/installation/"]
+---
+
+This guide covers prerequisites, building the project, running the quality gate, and operating the
+`tower` MCP server for the first time.
+
+---
+
+## Install the stable release
+
+On Linux (x86_64 or ARM64) and macOS (Apple Silicon), install Tower and its bundled extensions:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/awf-project/tower/main/scripts/install.sh | sh
+tower --version
+```
+
+The binary is installed in `$HOME/.local/bin`. Add that directory to your `PATH` if needed.
+
+## Prerequisites for building from source
+
+### Rust toolchain
+
+The toolchain is pinned in `rust-toolchain.toml`:
+
+```toml
+[toolchain]
+channel = "1.100.0"
+components = ["rustfmt", "clippy"]
+profile  = "minimal"
+```
+
+`rustup` reads this file automatically on first use and installs the exact channel and components.
+No extra build target is required: the engine and the native extensions all build for the host target.
+(The previous WASM model needed `wasm32-wasip1` and a WASI SDK; neither is required any more.)
+
+If you do not have `rustup`:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### cargo-deny
+
+Used to enforce license and advisory policy (`deny.toml` at the workspace root).
+
+```bash
+cargo install cargo-deny --locked
+```
+
+---
+
+## Clone and build
+
+```bash
+git clone <repository-url> tower
+cd tower
+
+# Build the host binary (tower) and every native extension.
+cargo build            # or: make build
+```
+
+The host binary produced is `target/debug/tower`; the reference extension binaries
+(`ast_extension`, `debug_extension`, `hello_extension`, `lsp_extension`, `lint_extension`) are also under
+`target/debug/`.
+
+---
+
+## Quality gate
+
+Run these four checks in order before every merge. The CI pipeline (`ci.yml`) executes them in exactly
+this sequence; a step must pass before the next runs. `make gate` runs the whole sequence.
+
+### 1. Format check
+
+```bash
+cargo fmt --all --check          # make fmt-check
+```
+
+### 2. Clippy (warnings are errors)
+
+```bash
+cargo clippy --workspace --all-targets -- -D warnings    # make clippy
+```
+
+### 3. Run the test suite
+
+Build native extension binaries before running tests so the host integration
+tests can locate sidecars under `target/debug/`. There is no WASM build step and
+no WASI SDK.
+
+```bash
+cargo build --workspace --bins
+cargo test --workspace           # make test
+```
+
+### 4. License and advisory policy
+
+```bash
+cargo deny check                 # make deny
+```
+
+---
+
+## Running the engine as an MCP server
+
+`tower` is a JSON-RPC 2.0 server that speaks over `stdin`/`stdout` using newline-delimited JSON (no
+`Content-Length` header). Start it with:
+
+```bash
+cargo run -p core_engine
+```
+
+Or, after a release build:
+
+```bash
+cargo build --release -p core_engine
+./target/release/tower
+```
+
+### Workspace root resolution
+
+The engine needs to know which directory to index. It resolves the workspace root in priority order:
+
+| Priority     | Mechanism                              | Example                                      |
+| ------------ | -------------------------------------- | -------------------------------------------- |
+| 1 (highest)  | `--workspace-dir <path>` CLI flag      | `tower --workspace-dir /home/user/myproject` |
+| 2            | `TOWER_WORKSPACE` environment variable | `TOWER_WORKSPACE=/home/user/myproject tower` |
+| 3 (fallback) | Current working directory              | `cd /home/user/myproject && tower`           |
+
+### Sled database
+
+On startup, `tower` creates `.tower/db/` inside the workspace root and opens a `sled` embedded
+database there. This directory is created automatically; no manual setup is required.
+
+```
+<workspace-root>/
+└── .tower/
+    └── db/       ← sled database (persisted across restarts)
+```
+
+### Startup reconciliation
+
+On every daemon startup, `tower` walks the eligible workspace inventory using the same
+`.towerignore`, hidden-file, symlink, and regular-file rules as `tower_reindex`. It reconciles
+that inventory with persisted state, adding missing files, removing confirmed stale or newly
+excluded paths, and preserving identities for surviving paths. It reports the reconciliation
+summary to `stderr`:
+
+```text
+tower: reconciled index — 2 added, 1 removed, 310 unchanged
+```
+
+The repair is transactional and idempotent. A failed reconciliation prevents the daemon from
+serving a partial index; the next startup retries it. Unchanged files are not re-read, rehashed,
+or rewritten merely because the daemon restarted.
+
+---
+
+## First session
+
+The following is a minimal copy-paste session. Each line sent to `stdin` must be a single JSON
+object terminated by a newline. Responses arrive on `stdout` the same way.
+
+Start the server pointed at a project directory:
+
+```bash
+cd /path/to/your/project
+cargo run -p core_engine
+# stderr: tower: reconciled index — A added, R removed, U unchanged
+```
+
+In a second terminal (or pipe input to the process), send JSON-RPC messages.
+
+### Configure the workspace
+
+`tower init` creates a canonical `.tower/config.toml` alongside `.towerignore`. The generated
+configuration uses native sidecar settings under `[extensions]` and host-owned formatter commands
+under `[formatter.tools.<id>]`; it does not create an index-completion marker or start external
+tools. Existing files are preserved byte-for-byte.
+
+See [Configuration](/tower/user-guide/configuration.md) for formatter fields, extension disabling, and
+the required manual migration for obsolete `[plugins]` configuration.
+
+### Handshake
+
+```json
+{ "jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {} }
+```
+
+Expected response:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "capabilities": { "tools": {} },
+    "protocolVersion": "2024-11-05",
+    "serverInfo": { "name": "tower", "version": "0.1.0" }
+  },
+  "id": 1
+}
+```
+
+### List available tools
+
+```json
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {} }
+```
+
+The response lists the native `tower_*` tools plus any tools contributed by discovered extensions
+(e.g. `tower_ast_get_outline` when the `ast` extension is present, or `tower_lint_check`
+when the `lint` extension is present). Extension tools are always namespaced as
+`tower_<ext>_<tool_name>`.
+
+The native `tower_rename_path` tool is available without an extension. It moves
+workspace-relative files or directories and accepts `semantic_policy` values
+`none`, `best_effort`, and `required`; use `dry_run:true` to inspect the move
+and any proposed reference edits before changing the workspace. See the
+[path rename how-to](/tower/user-guide/path-rename.md) for a complete request
+and the [MCP tool reference](/tower/reference/mcp-tools.md) for the wire contract.
+
+The native `tower_safe_delete_symbol` tool is listed even when extensions are unavailable. Planning
+requires the AST extension and a configured semantic backend. It resolves a declaration, checks
+references, and either returns a blocking report or applies a validated declaration and cleanup
+plan. Use `dry_run:true` to inspect the report without changing files. See
+[Safe-delete a symbol](/tower/user-guide/semantic-edits.md#safe-delete-a-symbol).
+
+### Install extensions
+
+From the Tower source checkout, install the reference extensions globally:
+
+```bash
+make install-extensions GLOBAL=1
+```
+
+On Linux, this uses `$XDG_DATA_HOME/tower/extensions` when `XDG_DATA_HOME` is non-empty,
+otherwise `$HOME/.local/share/tower/extensions`. Use an absolute `XDG_DATA_HOME`.
+Without `GLOBAL=1`, installation stays local to the checkout's `.tower/extensions`.
+An explicit destination always wins, including with global mode:
+
+```bash
+make install-extensions GLOBAL=1 EXT_DEST="/path with spaces/extensions"
+```
+
+The command builds the extensions and prints the destination before copying each manifest and
+executable. `EXTENSIONS=lint` installs only lint; `EXT_PROFILE=debug` uses a debug build.
+`make install` updates only the server, so run the extension installation command after updating it.
+
+After replacing binaries, reload the shared daemon for each affected workspace and reconnect its
+MCP clients. From that workspace, `tower shutdown` stops its daemon; reconnecting the clients
+starts it again with the installed extensions. Installation itself does not stop running daemons.
+
+Global extensions are available across projects. A workspace-local extension with the same name
+in `.tower/extensions/<name>/` takes precedence over its global copy. An explicit
+`--extensions-dir` or `TOWER_EXTENSIONS_DIR` replaces both discovery scopes; install into that
+location with `EXT_DEST` if you use this override.
+
+No extensions in any scope simply serves the native tools; an extension that fails to spawn (or one
+listed in the config disable list) is skipped with a stderr warning and never blocks startup. When the
+same extension name appears in both scopes, the local copy wins. See [`extensions.md`](/tower/reference/extensions.md)
+for the manifest schema, capabilities, activation, and the supervision/fault model.
+
+### Explore a type hierarchy
+
+With an LSP binding configured for the file type, query the supertypes, subtypes, or both for a
+symbol position. Positions use zero-based lines and UTF-16 character offsets:
+
+```toml
+[lsp.rust]
+command = "rust-analyzer"
+args = []
+extensions = ["rs"]
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lsp_type_hierarchy",
+    "arguments": {
+      "path": "src/lib.rs",
+      "line": 12,
+      "character": 7,
+      "direction": "both"
+    }
+  }
+}
+```
+
+The result separates `supertypes` and `subtypes`. If the language server is not configured or does
+not support the capability, Tower returns `supported:false` with empty arrays so clients can fall
+back to another navigation strategy. See [Type hierarchy](/tower/user-guide/type-hierarchy.md) for the
+location and external-result contract.
+
+### Find a file
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": { "name": "tower_find_file", "arguments": { "query": "main.rs" } }
+}
+```
+
+### List a directory
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_list_dir",
+    "arguments": { "path": "src", "recursive": true, "max_depth": 1 }
+  }
+}
+```
+
+### Search for text
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_search_text",
+    "arguments": { "pattern": "fn main" }
+  }
+}
+```
+
+### Read a file
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_read_file",
+    "arguments": { "path": "src/main.rs" }
+  }
+}
+```
+
+### Run standalone linters
+
+Configure linters in `<workspace>/.tower/config.toml` under `[lint.<language>]`. The extension
+matches files by extension and runs the configured command read-only.
+
+```toml
+[lint.rust]
+command = "cargo"
+args = ["clippy", "--message-format=json"]
+extensions = ["rs"]
+format = "rustc-json"
+target = "none"
+
+[lint.javascript]
+command = "eslint"
+args = ["--format", "json"]
+timeout_secs = 10
+extensions = ["js", "jsx", "ts", "tsx"]
+format = "eslint-json"
+target = "append"
+```
+
+`timeout_secs` is optional. Omit it for no Tower-controlled duration limit, or set a positive integer
+when a configured linter needs an explicit budget; the same deadline applies to lint checks and both
+phases of a lint fix.
+
+Call `tower_lint_check` with a path to lint one file, or with `{}` to lint every indexed file
+that has a matching lint configuration.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lint_check",
+    "arguments": { "path": "src/main.rs" }
+  }
+}
+```
+
+Call `tower_lint_fix` to apply structured fixes emitted by `rustc-json` or `eslint-json` linters.
+The lint extension does not run linter in-place mutation modes; fixes are sent through Tower's
+CAS-guarded atomic write path. Use `dry_run:true` to return previews without changing files, and
+`unsafe:true` only when you want to apply fixes marked unsafe or unknown by the linter.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lint_fix",
+    "arguments": { "path": "src/main.rs", "dry_run": true }
+  }
+}
+```
+
+### Create a file
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_create_file",
+    "arguments": { "path": "notes.txt", "content": "hello world\n" }
+  }
+}
+```
+
+### Mass find-and-replace
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_global_replace",
+    "arguments": { "target": "old_name", "replacement": "new_name" }
+  }
+}
+```
+
+Response shape (success):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"files_changed\":3,\"replacements\":7,\"errors\":[]}"
+      }
+    ]
+  },
+  "id": 10
+}
+```
+
+All tool responses follow the same envelope: `result.content[0].text` is a JSON string containing
+the tool-specific payload.
+
+### Error codes reference
+
+| Code   | Meaning                                                    |
+| ------ | ---------------------------------------------------------- |
+| -32700 | `ParseError` — malformed JSON or invalid UTF-8             |
+| -32600 | `InvalidRequest` — wrong `jsonrpc` version                 |
+| -32601 | `MethodNotFound` — unknown RPC method                      |
+| -32602 | `InvalidParams` — missing required field in tool arguments |
+| -32603 | `InternalError` — tool execution failed                    |
+| -32001 | `ToolNotFound` — named tool not in the registry            |
+| -32002 | `ResourceNotFound` — domain entity not found               |
+
+---
+
+## Next steps
+
+- [architecture.md](/tower/development/architecture.md) — hexagonal boundary, domain model, adapter wiring
+- [mcp-tools.md](/tower/reference/mcp-tools.md) — the native tools and the extension tools in full detail
+- [extensions.md](/tower/reference/extensions.md) — authoring a native extension: protocol, capabilities, fault model
+- [development.md](/tower/development/development.md) — contribution guide, TDD workflow, benchmark targets

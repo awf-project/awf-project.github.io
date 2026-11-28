@@ -1,0 +1,13 @@
+{{ define "main" }}
+<div class="shell">{{ partial "breadcrumb.html" . }}</div>
+<div class="shell reader">
+  {{ partial "reader-nav.html" . }}
+  <article class="article">
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}
+    {{ if .Fragments.Headings }}<details class="contents"><summary>On this page</summary>{{ .TableOfContents }}</details>{{ end }}
+    <div class="prose">{{ .Content }}</div>
+    {{ partial "source.html" . }}
+  </article>
+</div>
+{{ end }}

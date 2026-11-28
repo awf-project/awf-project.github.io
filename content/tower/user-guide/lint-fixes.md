@@ -1,0 +1,174 @@
+---
+title: "Apply Lint Fixes"
+source: "docs/user-guide/lint-fixes.md"
+aliases: ["/tower/docs/user-guide/apply-lint-fixes/"]
+---
+
+Use `tower_lint_fix` when you want Tower to apply machine-applicable linter fixes without giving the
+linter or the extension direct write access to workspace files. The `lint` extension extracts
+structured fixes, then asks the host to apply them through Tower's existing atomic write and
+compare-and-swap path.
+
+---
+
+## Before you start
+
+Configure at least one linter in `<workspace>/.tower/config.toml`:
+
+```toml
+[lint.rust]
+command = "cargo"
+args = ["clippy", "--message-format=json"]
+extensions = ["rs"]
+format = "rustc-json"
+target = "none"
+
+[lint.javascript]
+command = "eslint"
+args = ["--format", "json"]
+timeout_secs = 10
+extensions = ["js", "jsx", "ts", "tsx"]
+format = "eslint-json"
+target = "append"
+```
+
+`timeout_secs` is optional, positive, and measured in seconds. When omitted, the linter has no
+Tower-controlled duration limit. When present, the same configured deadline is used for the initial
+lint run, fix preparation, and the follow-up check after edits. Tower also gives the lint extension
+a sufficient derived host budget. If a command reaches its explicit deadline, Tower terminates and
+reaps its process tree.
+
+Supported fix extraction is built in for `rustc-json` and `eslint-json`. `generic-regex` diagnostics
+can still be reported by `tower_lint_check`, but they are reported as unsupported by
+`tower_lint_fix`.
+
+---
+
+## Preview fixes first
+
+Use `dry_run:true` to inspect the edits and preview content without touching the file on disk:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 20,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lint_fix",
+    "arguments": {
+      "path": "src/lib.rs",
+      "dry_run": true
+    }
+  }
+}
+```
+
+Typical result:
+
+```json
+{
+  "files_changed": 0,
+  "fixes_applied": 1,
+  "fixes_skipped": [],
+  "remaining_diagnostics": [],
+  "previews": [
+    {
+      "path": "src/lib.rs",
+      "edits": [
+        {
+          "start_byte": 42,
+          "end_byte": 51,
+          "replacement": "items.is_empty()"
+        }
+      ],
+      "preview_content": "..."
+    }
+  ]
+}
+```
+
+---
+
+## Apply safe fixes
+
+Omit `dry_run` to apply fixes. By default, Tower applies only safe structured fixes:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lint_fix",
+    "arguments": {
+      "path": "src/lib.rs"
+    }
+  }
+}
+```
+
+The response reports:
+
+- `files_changed`: how many files were actually rewritten
+- `fixes_applied`: how many extracted fixes landed
+- `fixes_skipped`: fixes Tower refused or could not apply
+- `remaining_diagnostics`: one follow-up lint pass after successful writes
+
+When `path` is omitted, Tower walks indexed files, selects only files with a matching lint
+configuration, and prepares all fix plans in path order before writing any file. A preparation
+failure leaves all files unchanged. Plans are then applied with per-file version checks; the
+application phase is not a multi-file transaction.
+
+If the initial lint or fix-preparation command expires, the response remains an in-band tool result
+with `lint_timeout` for a check or `lint_fix_unavailable` for fix preparation. If edits were already
+committed and the follow-up check expires, Tower returns `lint_fix_apply_failed` with the cause and
+an indication that edits were applied; it does not report an empty successful diagnostic list.
+
+---
+
+## Opt in to unsafe fixes
+
+Some linter suggestions are structured but not safe-by-default, such as rustc/clippy suggestions with
+non-machine-applicable confidence. To include those, set `unsafe:true`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 22,
+  "method": "tools/call",
+  "params": {
+    "name": "tower_lint_fix",
+    "arguments": {
+      "path": "src/lib.rs",
+      "unsafe": true
+    }
+  }
+}
+```
+
+Without `unsafe:true`, those fixes are returned in `fixes_skipped` with `reason:"unsafe"`.
+
+---
+
+## Understand skipped fixes
+
+`fixes_skipped` is part of normal tool behavior. Common reasons are:
+
+| Reason          | Meaning                                                                            |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `unsafe`        | The fix was structured but not safe-by-default, and `unsafe:true` was not set.     |
+| `unsupported`   | The diagnostic had no supported structured fix payload for `tower_lint_fix`.       |
+| `conflict`      | The fix overlapped another accepted edit or the host rejected an overlapping edit. |
+| `cas_conflict`  | The file changed between lint extraction and apply, so Tower refused the write.    |
+| `invalid_range` | The emitted byte range was not valid for the current file content.                 |
+
+These are reported in-band so callers can branch on them without treating the tool call itself as a
+transport failure.
+
+---
+
+## Related pages
+
+- [`../mcp-tools.md`](/tower/reference/mcp-tools.md) for the full `tower_lint_fix` reference
+- [`../extensions.md`](/tower/reference/extensions.md) for the extension capability model
+- [`../getting-started.md`](/tower/getting-started/installation.md) for initial workspace setup

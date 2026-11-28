@@ -1,0 +1,19 @@
+[[projects.queryable]]
+id = "cli"
+name = "AWF CLI"
+path = "../cli"
+
+[[projects.queryable]]
+id = "tower"
+name = "Tower"
+path = "../tower"
+
+[[projects.queryable]]
+id = "zpm"
+name = "ZPM"
+path = "../zpm"
+
+[[projects.queryable]]
+id = "ztick"
+name = "ztick"
+path = "../ztick"

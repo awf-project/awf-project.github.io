@@ -1,0 +1,10 @@
+{{- $dest := .Destination -}}
+{{- $url := urls.Parse $dest -}}
+{{- if and (not $url.IsAbs) (strings.HasSuffix $url.Path ".md") -}}
+  {{- with site.GetPage $url.Path -}}
+    {{- $dest = .RelPermalink -}}
+    {{- with $url.Fragment }}{{ $dest = printf "%s#%s" $dest . }}{{ end -}}
+  {{- else -}}{{ errorf "Unresolved page link %q on %s" $dest .Page.Path }}{{- end -}}
+{{- end -}}
+<a href="{{ $dest }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>
+{{- "" -}}

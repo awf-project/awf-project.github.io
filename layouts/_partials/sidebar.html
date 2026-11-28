@@ -1,0 +1,11 @@
+{{ $product := .FirstSection }}
+<nav class="sidebar" aria-label="Product documentation">
+  <a class="sidebar-product {{ $product.Section }}" href="{{ $product.RelPermalink }}">{{ partial "icon.html" $product.Section }} {{ $product.Title }}</a>
+  {{ range $product.Sections.ByWeight }}
+  <details {{ if or (eq . $) (.IsAncestor $) }}open{{ end }}><summary>{{ .LinkTitle }}</summary><ul>
+  <li><a href="{{ .RelPermalink }}" {{ if eq . $ }}aria-current="page"{{ end }}>Section index</a></li>
+  {{ range .RegularPages.ByLinkTitle }}<li><a href="{{ .RelPermalink }}" {{ if eq . $ }}aria-current="page"{{ end }}>{{ .LinkTitle }}</a></li>{{ end }}
+  </ul></details>
+  {{ end }}
+  <a class="side-index" href="{{ $product.RelPermalink }}">All {{ $product.Title }} resources</a>
+</nav>

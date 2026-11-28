@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "services": {
+    "web": {
+      "hostname": "documentation-awf",
+      "command": ["make", "serve-nexus"]
+    }
+  }
+}

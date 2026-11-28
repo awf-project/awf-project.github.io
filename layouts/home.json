@@ -1,0 +1,7 @@
+{{- $entries := slice -}}
+{{- range site.Pages -}}
+  {{- if and .Section (or .Params.source .IsPage) -}}
+  {{- $entries = $entries | append (dict "title" .Title "tool" .FirstSection.Title "url" .RelPermalink "body" (.Plain | plainify | replaceRE "\\s+" " ")) -}}
+  {{- end -}}
+{{- end -}}
+{{- $entries | jsonify -}}

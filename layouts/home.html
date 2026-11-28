@@ -1,0 +1,16 @@
+{{ define "main" }}
+<section class="hero"><div class="shell">
+  <div class="hero-copy"><h1>Documentation</h1>
+  <p>Guides and technical reference for the AWF toolkit.</p>
+  {{ partial "search-form.html" . }}</div>
+</div></section>
+<section class="shell library" aria-labelledby="toolkit"><h2 id="toolkit">Explore the toolkit</h2>
+<div class="product-grid">{{ range site.Sections }}
+  <article class="product {{ .Section }}">
+    <a class="product-head" href="{{ .RelPermalink }}"><span class="badge-icon">{{ partial "icon.html" .Section }}</span><h3>{{ .Title }}</h3></a>
+    <p>{{ .Description }}</p>
+    {{ $product := . }}<ul>{{ range slice "getting-started" "tutorials" "user-guide" "reference" }}{{ with $product.GetPage (printf "%s/%s" $product.Path .) }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>{{ end }}{{ end }}</ul>
+  </article>{{ end }}
+</div></section>
+{{ end }}

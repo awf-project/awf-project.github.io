@@ -1,0 +1,261 @@
+---
+title: "Project overview"
+slug: "overview"
+source: "README.md"
+---
+
+Tower is a Rust core engine that gives MCP clients a fast, shared view of a workspace:
+indexed files, content search, safe edits, semantic tools, lint fixes, and debug workflows.
+
+It runs as one daemon per workspace. Each MCP session launched through Tower's stdio entrypoint
+connects to that daemon, so multiple agents can inspect and edit the same project through the same
+persisted index.
+
+Architecture: **Domain-Driven Design + Hexagonal Architecture + Microkernel**.
+
+## Why Tower
+
+| Capability                      | What it gives clients                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Persistent workspace index**  | Fast file lookup and directory listing from a `sled`-backed VFS.                                           |
+| **Parallel text search**        | Rayon-backed grep across indexed file contents.                                                            |
+| **Dependency source search**    | Opt-in, bounded search of explicitly configured, read-only source roots.                                   |
+| **Optional command execution**  | Host-owned, allowlisted direct commands with workspace-contained working directories and bounded output.   |
+| **Safe mutations**              | Atomic writes and CAS-style `expected_version` checks for agent-safe edits.                                |
+| **Path rename**                 | Preview or move indexed files and directories, with optional language-server reference updates.            |
+| **Reference-aware safe delete** | Check references before deleting a declaration and apply validated backend cleanup edits safely.           |
+| **Shared daemon**               | One watcher, index, and extension registry per workspace; many MCP clients.                                |
+| **Native sidecar extensions**   | Out-of-process extension binaries that contribute `tower_<ext>_*` MCP tools.                               |
+| **Semantic workflows**          | AST outline/symbol tools, LSP navigation including type hierarchies, lint fixes, and opt-in DAP debugging. |
+| **Semantic code retrieval**     | Opt-in embedding search, related files, and token-bounded task context from a local SQLite index.          |
+| **Project agent memory**        | Explicit, durable project-scoped records with compact search, timeline, and task-context retrieval.        |
+| **No runtime VM**               | Native binaries only; no JVM, Node, WASM runtime, or container required at runtime.                        |
+
+## Quick Start
+
+### Install
+
+Install the latest stable release on Linux (x86_64 or ARM64) or macOS (Apple Silicon).
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/awf-project/tower/main/scripts/install.sh | sh
+tower --version
+```
+
+The installer writes `tower` to `$HOME/.local/bin` and installs the bundled extensions.
+To pin a release, pass its tag to the installer.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/awf-project/tower/main/scripts/install.sh \
+  | TOWER_VERSION=v0.1.0 sh
+```
+
+Use `TOWER_VERSION=dev` for the latest development build or `TOWER_INSTALL_DIR` to choose
+the binary directory.
+
+To build from source instead:
+
+```bash
+git clone https://github.com/awf-project/tower.git
+cd tower
+cargo build --workspace --bins
+```
+
+The main binary is `target/debug/tower`.
+
+To install the server and extensions for use across projects, run from this checkout:
+
+```bash
+make install
+make install-extensions GLOBAL=1
+```
+
+`make install` updates only the server. See [extension installation](/tower/getting-started/installation.md#install-extensions)
+for destination overrides and reloading running daemons.
+
+### Initialize a Workspace
+
+Run this once at the project root you want Tower to index:
+
+```bash
+tower init
+```
+
+This creates:
+
+| File                 | Purpose                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `.towerignore`       | Authoritative ignore rules for the Tower index, independent of `.gitignore`. |
+| `.tower/config.toml` | Local Tower configuration, including formatter/linter/debug settings.        |
+
+The generated configuration uses the canonical `[extensions]` and
+`[formatter.tools.<id>]` sections. **BREAKING:** an existing `[plugins]` section now
+prevents startup and requires manual migration. `tower init` never overwrites an
+existing configuration or ignore file; see
+[Configuration](/tower/user-guide/configuration.md) for the schema and migration steps.
+
+Tower does not impose a finite duration limit on operations by default. Configure an explicit
+positive timeout when a bounded operation is required; shutdown, cancellation, crash detection,
+and child-process cleanup safeguards remain bounded independently. See
+[operation timeout migration](/tower/user-guide/configuration.md#operation-timeout-migration) if
+you relied on a previous implicit limit.
+
+Secrets and generated output should be excluded in `.towerignore` before exposing a workspace to an
+agent. If `.towerignore` is missing, Tower warns and indexes all non-hidden files except `.git/`.
+
+### Connect an MCP Client
+
+Tower's MCP entrypoint is the `mcp` subcommand:
+
+```bash
+tower mcp
+```
+
+Most MCP clients do not store that as one shell string. Configure the executable and arguments in the
+shape your client expects. In JSON-like configs, that usually means:
+
+```json
+{
+  "command": "tower",
+  "args": ["mcp"]
+}
+```
+
+If the client provides a CLI for registering MCP servers, pass `tower` as the command and `mcp` as
+its argument using that client's syntax.
+
+The `mcp` subcommand connects to the workspace daemon, spawning it if needed. The daemon owns the
+index, watcher, storage, and loaded extensions, then exits after its configured idle timeout when no
+clients remain.
+
+On a cold start, MCP initialization can complete while workspace preparation and extension catch-up
+continue. Use `tower status` to inspect workspace, AST, and LSP readiness. Workspace-dependent
+calls wait up to the configured preparation deadline; see
+[configuration](/tower/user-guide/configuration.md) and
+[MCP readiness errors](/tower/reference/mcp-tools.md#daemon-startup-and-readiness).
+
+Useful local checks:
+
+```bash
+tower status
+tower shutdown
+```
+
+Workspace resolution is consistent across commands:
+
+| Priority | Mechanism                          |
+| -------- | ---------------------------------- |
+| 1        | `--workspace-dir <path>`           |
+| 2        | `TOWER_WORKSPACE=/path/to/project` |
+| 3        | current working directory          |
+
+#### Example: Codex
+
+From the root of the workspace you want Tower to index:
+
+```bash
+codex mcp add tower -- tower --workspace-dir "$PWD" mcp
+codex mcp list
+```
+
+This registers Tower globally in Codex and fixes its workspace to the current directory at
+registration time. Starting Codex in another directory does not change that workspace.
+
+Start a new Codex session and use `/mcp` to verify that Tower is connected.
+
+## Core Concepts
+
+**The index is Tower-owned.** Tower persists workspace metadata under `.tower/db/`, watches file
+changes, reconciles the eligible filesystem inventory at every daemon startup,
+and serves file/search tools from the repaired index.
+
+**`.towerignore` is the source of truth.** Tower does not inherit `.gitignore`. This keeps the agent
+visibility policy explicit and project-local.
+
+**Dependency search is opt-in per query.** Configure source roots in `.tower/config.toml`, then pass
+`scope: {"workspace": true, "dependencies": true}` to `tower_find_file` or `tower_search_text`.
+Omitting `scope` keeps the existing workspace-only response. Dependency results carry read-only
+locators. See [searching dependency sources](/tower/user-guide/dependency-search.md).
+
+**Edits are CAS-aware.** Mutating tools can use an `expected_version` token returned by
+`tower_read_file` to reject writes when a file changed since it was read.
+
+**Extensions are native sidecars.** Extension binaries are discovered at startup, supervised by the
+host, and exposed as namespaced MCP tools such as `tower_ast_get_outline` or
+`tower_lint_check`. A failed extension is skipped or quarantined without taking down the daemon.
+
+**Semantic retrieval is opt-in.** Set `[semantic_context] enabled = true` in
+`.tower/config.toml` and provide a compatible embedding service. Tower defaults to a local
+OpenAI-compatible Ollama endpoint when enabled; it does not start or install the service.
+See [semantic retrieval](/tower/user-guide/semantic-retrieval.md) for setup and examples.
+
+**Agent memory is explicit.** The first-party `agent_memory` sidecar stores structured project
+knowledge when a client calls `tower_memory_remember`; it does not capture transcripts automatically.
+Search returns compact hits, and `tower_memory_get` retrieves full records by ID. See
+[project agent memory](/tower/user-guide/agent-memory.md) for setup, privacy, and recovery behavior.
+
+## Tool Surface
+
+Core native tools are always available. `tower_run_command` appears when enabled in `[shell]`;
+extension tools appear when their sidecars are installed and enabled.
+
+| Area               | Examples                                                                                                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Files and search   | `tower_read_file`, `tower_list_dir`, `tower_find_file`, `tower_search_text`                                                                                                |
+| Safe mutations     | `tower_create_file`, `tower_edit_range`, `tower_global_replace`, `tower_delete_file`, `tower_rename_path`, `tower_safe_delete_symbol`                                      |
+| AST                | `tower_ast_get_outline`, `tower_ast_find_symbols`, `tower_ast_read_symbol`                                                                                                 |
+| LSP                | `tower_lsp_diagnostics`, `tower_lsp_definition`, `tower_lsp_references`, `tower_lsp_hover`, `tower_lsp_implementations`, `tower_lsp_type_hierarchy`                        |
+| Semantic retrieval | `tower_semantic_reindex`, `tower_semantic_search`, `tower_semantic_related_files`, `tower_semantic_context_for_task`                                                       |
+| Agent memory       | `tower_memory_remember`, `tower_memory_update`, `tower_memory_forget`, `tower_memory_search`, `tower_memory_timeline`, `tower_memory_get`, `tower_memory_context_for_task` |
+| Lint               | `tower_lint_check`, `tower_lint_fix`                                                                                                                                       |
+| Debug              | `tower_debug_launch`, `tower_debug_eval_at`, `tower_debug_record_and_find_origin`                                                                                          |
+| Command execution  | `tower_run_command` (opt-in; configured allowlist only)                                                                                                                    |
+| Cross-project      | `tower_list_projects`, `tower_query_project`                                                                                                                               |
+
+See [docs/mcp-tools.md](/tower/reference/mcp-tools.md) for the full wire protocol, tool schemas, responses, and
+stable error codes.
+
+## Documentation
+
+| Page                                                                                                                             | Contents                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [docs/getting-started.md](/tower/getting-started/installation.md)                                                                               | Build, first MCP session, quality gate, and copy-paste examples.                         |
+| [docs/towerignore.md](/tower/reference/towerignore.md)                                                                                       | `.towerignore` behavior, defaults, migration notes, and watcher limits.                  |
+| [docs/user-guide/configuration.md](/tower/user-guide/configuration.md)                                                             | Canonical configuration, operation timeouts, formatter tools, and migration.             |
+| [docs/architecture.md](/tower/development/architecture.md)                                                                                     | Hexagonal boundary, staged daemon startup, readiness gates, and invariants.              |
+| [docs/extensions.md](/tower/reference/extensions.md)                                                                                         | Native sidecar extension protocol, manifests, capabilities, and supervision.             |
+| [docs/mcp-tools.md](/tower/reference/mcp-tools.md)                                                                                           | Complete MCP tool reference and JSON-RPC details.                                        |
+| [docs/user-guide/semantic-edits.md](/tower/user-guide/semantic-edits.md)                                                           | Semantic rename, reference-aware safe delete, and AST edit workflows.                    |
+| [docs/user-guide/semantic-retrieval.md](/tower/user-guide/semantic-retrieval.md)                                                   | Configure embeddings, search code by meaning, find related files, and pack task context. |
+| [docs/user-guide/agent-memory.md](/tower/user-guide/agent-memory.md)                                                               | Store, retrieve, revise, and forget structured project memories.                         |
+| [docs/user-guide/path-rename.md](/tower/user-guide/path-rename.md)                                                                 | Preview and apply file or directory moves with optional reference updates.               |
+| [docs/user-guide/type-hierarchy.md](/tower/user-guide/type-hierarchy.md)                                                           | Explore supertypes and subtypes through a configured language server.                    |
+| [docs/user-guide/lint-fixes.md](/tower/user-guide/lint-fixes.md)                                                                   | Previewing and applying structured linter fixes.                                         |
+| [docs/user-guide/debug-sessions.md](/tower/user-guide/debug-sessions.md)                                                           | Interactive DAP sessions and rr-backed reverse-debug workflows.                          |
+| [docs/user-guide/project-queries.md](/tower/user-guide/project-queries.md)                                                         | Configure trusted external projects and route read-only queries with source attribution. |
+| [docs/user-guide/dependency-search.md](/tower/user-guide/dependency-search.md)                                                     | Configure bounded dependency roots and opt into origin-aware file and text searches.     |
+| [docs/user-guide/shell-commands.md](/tower/user-guide/shell-commands.md)                                                           | Enable and use the host-owned, allowlisted `tower_run_command` tool.                     |
+| [docs/development.md](/tower/development/development.md)                                                                                       | Contribution workflow, CI checks, tests, and project conventions.                        |
+| [docs/ADR/0010-stage-daemon-startup-and-capability-readiness.md](/tower/adr/0010-stage-daemon-startup-and-capability-readiness.md) | B001 startup ownership and capability-readiness decision.                                |
+
+## Development
+
+The merge gate is:
+
+```bash
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo build --workspace --bins
+cargo test --workspace
+cargo deny check
+```
+
+Or run the project wrapper:
+
+```bash
+make gate
+```
+
+## License
+
+[EUPL-1.2](https://github.com/awf-project/tower/blob/main/LICENSE).

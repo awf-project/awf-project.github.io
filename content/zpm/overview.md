@@ -1,0 +1,202 @@
+---
+title: "Project overview"
+slug: "overview"
+source: "README.md"
+---
+
+A high-performance MCP (Model Context Protocol) server written in Zig, designed to bridge 
+Large Language Models with a Prolog inference engine for deterministic logical reasoning.
+
+## Features
+
+- CLI entrypoint with `init`, `serve`, `upgrade`, and all 29 MCP tools exposed as subcommands (e.g. `zpm remember-fact`, `zpm query-logic`)
+- Self-upgrade via `zpm upgrade` with SHA256 verification, atomic install, and `--channel stable|dev` selection
+- Per-project `.zpm/` directory for isolated configuration and persistence
+- MCP protocol version `2026-07-28` over STDIO transport with `server/discover`
+- Tool registration and discovery via `tools/list`
+- Echo tool for health-check and smoke testing
+- Prolog inference engine with Trealla C API integration
+- Knowledge management tools: assert facts and define rules via MCP
+- Exploration tools: query Prolog goals and trace transitive dependencies via MCP
+- Supervision tools: verify knowledge base consistency and explain proof chains via MCP
+- Knowledge schema discovery: inspect file-loaded static facts and rules alongside asserted predicates, with clause counts and types, in each selected memory
+- Delete tools: retract individual facts or clear entire categories from the knowledge base
+- Update tools: atomically replace individual facts or upsert facts with pattern matching
+- Truth Maintenance System: manage assumptions and automatically propagate belief changes via MCP
+- Knowledge base persistence: durable storage via write-ahead journal and fresh-engine-validated snapshots with automatic recovery
+- Named memory segments for domain-isolated knowledge bases with independent WAL/snapshot persistence, read-only mount mode, project and global scope, cross-memory queries via Prolog module qualification, and discoverable `memory` selectors in MCP schemas and CLI help
+- Persistent mount manifest (`.zpm/mounts.json`) for durable memory configuration across CLI invocations
+- Documentation site with Hugo/Thulite (Doks) and GitHub Pages auto-deployment
+- Zero external runtime dependencies (statically linked, including Prolog library)
+
+## Quick Start
+
+### Prerequisites
+
+- [Zig](https://ziglang.org/download/) >= 0.17.1
+- C compiler (gcc or clang)
+
+### Install
+
+Install the latest pre-built binary with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/awf-project/zpm/main/scripts/install.sh | sh
+```
+
+Supported platforms: Linux (x86_64, arm64), macOS (x86_64, arm64).
+
+### Build from Source
+
+Clone the repository with its Trealla Prolog submodule, which provides ZPM's inference engine:
+
+```bash
+git clone --recurse-submodules https://github.com/awf-project/zpm.git
+cd zpm
+```
+
+For an existing clone, initialize the submodule before building:
+
+```bash
+git submodule update --init --recursive
+```
+
+Then build and test:
+
+```bash
+# Build the server binary
+make build
+
+# Run unit tests
+make test
+
+# Run functional (end-to-end) tests
+make functional-test
+```
+
+The built binary is located at `zig-out/bin/zpm`.
+
+### CLI Usage
+
+```bash
+# Display help (zpm with no args also prints help, but exits 1)
+zpm --help
+
+# Show version (use the subcommand; --version/-v fall through to help)
+zpm version
+
+# Initialize a project directory
+zpm init
+
+# Start the MCP server (STDIO transport)
+zpm serve
+
+# Upgrade to the latest release (verifies SHA256, atomic replace)
+zpm upgrade
+zpm upgrade --channel dev --dry-run
+
+# Invoke MCP tools directly from the shell
+zpm remember-fact --fact "task_status(f017, done)"
+zpm query-logic --goal "task_status(X, done)" --format json
+zpm save-snapshot --name "before-deploy"
+
+# Manage memory segments
+zpm memory create --name feature_auth
+zpm memory create --name shared_profiles --scope global
+zpm memory list
+zpm remember-fact --fact "task_done(login)" --memory feature_auth
+zpm query-logic --goal "task_done(X)" --memory feature_auth
+zpm get-knowledge-schema --memory feature_auth
+zpm memory mount --name feature_auth --mode ro
+```
+
+The optional `--memory` flag selects a mounted segment. Omitting it keeps unqualified reads in the default memory. Memory-aware MCP tools advertise the optional string `memory` argument in `tools/list`, so clients can discover it before calling a tool. Use `zpm get-knowledge-schema --memory <name>` to inspect predicates in a named segment; see [Schema Discovery](/zpm/user-guide/schema-discovery.md) for an example.
+
+See the [CLI Reference](/zpm/reference/cli.md) for the full list of tool subcommands and flags.
+
+### Connect via MCP Client
+
+Add zpm to your MCP client configuration. For example, in Claude Code's `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "zpm": {
+      "command": "zpm",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `make build` | Build the server binary |
+| `make check` | Run all checks (lint + test + e2e) |
+| `make clean` | Remove build artifacts |
+| `make fmt` | Format source code |
+| `make functional-test` | Run end-to-end MCP protocol tests |
+| `make lint` | Check formatting |
+| `make test` | Run unit tests (inline Zig tests) |
+| `make upgrade-test` | Run upgrade end-to-end tests |
+
+## MCP Tools
+
+| Tool | Description | Arguments |
+|------|-------------|-----------|
+| `assume_fact` | Assert a fact under a named assumption with automatic justification tracking | `assumption` (string, required), `fact` (string, required), `memory` (string, optional) |
+| `clear_context` | Clear all facts from the knowledge base matching a pattern | `category` (string, required), `memory` (string, optional) |
+| `create_memory` | Create a named memory segment backed by a dedicated Prolog module | `name` (string, required), `scope` (string, optional) |
+| `define_rule` | Assert a Prolog rule into the knowledge base | `head` (string, required), `body` (string, required), `memory` (string, optional) |
+| `echo` | Returns the provided message (health-check) | `message` (string, required) |
+| `explain_why` | Trace proof tree for a fact and return structured deduction chain | `fact` (string, required), `max_depth` (integer, optional), `memory` (string, optional) |
+| `find_predicate_references` | Locate all usage sites of a Prolog predicate in the knowledge base | `functor` (string, required), `arity` (integer, optional), `memory` (string, optional), `include_cross_memory_refs` (boolean, optional) |
+| `forget_fact` | Remove a single fact from the knowledge base | `fact` (string, required), `memory` (string, optional) |
+| `get_belief_status` | Query whether a belief is currently supported and which assumptions justify it | `fact` (string, required), `memory` (string, optional) |
+| `get_justification` | Query all facts supported by a named assumption | `assumption` (string, required), `memory` (string, optional) |
+| `get_kb_overview` | Single-call snapshot of the default knowledge base: static and asserted user predicates with sample clauses, assumptions, snapshots, and persistence health | `sample_size` (integer, optional) |
+| `get_knowledge_schema` | List file-loaded static and asserted user predicates in the selected memory with arity, type (fact/rule/both), and clause count | `memory` (string, optional) |
+| `get_persistence_status` | Query the persistence layer status including journal size, last snapshot, and operational mode | (no required arguments) |
+| `list_assumptions` | List all currently active assumptions and their associated facts | `memory` (string, optional) |
+| `list_memories` | List all discoverable memories with scope, mount status, and mode | (no required arguments) |
+| `list_snapshots` | List all available knowledge base snapshots with metadata | `memory` (string, optional) |
+| `mount_memory` | Mount a named memory segment for use, optionally in read-only mode | `name` (string, required), `mode` (string, optional) |
+| `query_logic` | Execute a Prolog goal and return all variable bindings as JSON | `goal` (string, required), `memory` (string, optional) |
+| `remember_fact` | Assert a Prolog fact into the knowledge base | `fact` (string, required), `memory` (string, optional) |
+| `rename_predicate` | Atomically rename a Prolog functor across facts, rules, and TMS justifications | `old_functor` (string, required), `new_functor` (string, required), `arity` (integer, optional), `memory` (string, optional), `dry_run` (boolean, optional), `propagate_cross_memory_refs` (boolean, optional) |
+| `restore_snapshot` | Restore knowledge base from a named snapshot and replay subsequent journal entries | `name` (string, required), `memory` (string, optional) |
+| `retract_assumption` | Retract a named assumption and propagate its removal through the knowledge base | `assumption` (string, required), `memory` (string, optional) |
+| `retract_assumptions` | Retract all assumptions matching a glob-style pattern | `pattern` (string, required), `memory` (string, optional) |
+| `save_snapshot` | Create a named point-in-time snapshot of the knowledge base | `name` (string, required), `memory` (string, optional) |
+| `trace_dependency` | Trace transitive dependencies from a start node using path/2 rules | `start_node` (string, required), `memory` (string, optional) |
+| `unmount_memory` | Unmount a named memory, flushing WAL and freeing resources | `name` (string, required) |
+| `update_fact` | Atomically replace an existing fact (retract old, assert new) | `old_fact` (string, required), `new_fact` (string, required), `memory` (string, optional) |
+| `upsert_fact` | Replace a fact matching functor+first arg, or insert if not found | `fact` (string, required), `memory` (string, optional) |
+| `verify_consistency` | Check knowledge base for integrity violations | `scope` (string, optional), `memory` (string, optional) |
+
+## Documentation
+
+Browse the documentation online at **https://docs.awf-project.ai/zpm/** or in the [`docs/`](/zpm/_index.md) directory:
+
+- [Project Brief](/zpm/project-brief.md) -- Vision and objectives
+- [Getting Started](/zpm/getting-started/_index.md) -- Build, install, and first steps
+- [Reference](/zpm/reference/_index.md) -- MCP tools and protocol details
+- [Snapshot recovery](/zpm/user-guide/persistence.md#recover-an-invalid-snapshot-safely) -- Repair snapshots created by affected versions
+- [ADR](/zpm/adr/_index.md) -- Architecture Decision Records
+
+To preview the documentation site locally:
+
+Install Hugo 0.169.0, Node.js 26, and the native [Dart Sass CLI](https://gohugo.io/functions/css/sass/#dart-sass) 1.108.1 first.
+Ensure `hugo` and `sass` are on `PATH`; Thulite 3 requires Dart Sass with the embedded protocol.
+
+```bash
+cd site && npm ci && npm run dev
+```
+
+Run `npm run build` from `site/` for the production build used by CI.
+
+## License
+
+See [LICENSE](https://github.com/awf-project/zpm/blob/main/LICENSE).

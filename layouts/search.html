@@ -1,0 +1,7 @@
+{{ define "main" }}
+<section class="shell search-page"><h1>Search documentation</h1>
+{{ partial "search-form.html" . }}
+<noscript>Enable JavaScript to search or browse the product guides above.</noscript>
+<p id="status" role="status" class="muted"></p><ul class="results" id="results"></ul>
+</section>{{ with resources.Get "search.js" | minify | fingerprint }}<script defer src="{{ .RelPermalink }}"></script>{{ end }}
+{{ end }}

@@ -1,0 +1,21 @@
+baseURL = "https://docs.awf-project.ai/"
+title = "AWF Documentation"
+locale = "en"
+disableKinds = ["taxonomy", "term", "RSS"]
+enableRobotsTXT = true
+
+[outputs]
+home = ["HTML", "JSON"]
+
+[permalinks.page]
+cli = "/:sections/:slug/"
+tower = "/:sections/:slug/"
+zpm = "/:sections/:slug/"
+ztick = "/:sections/:slug/"
+
+[markup.highlight]
+style = "github-dark"
+
+[markup.tableOfContents]
+startLevel = 2
+endLevel = 3

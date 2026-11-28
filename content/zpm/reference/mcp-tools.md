@@ -1,0 +1,3347 @@
+---
+title: "MCP Tools Reference"
+description: "Explore the ZPM MCP protocol and tool contracts for Prolog queries, knowledge management, supervision, memories, and persistence."
+source: "docs/reference/mcp-tools.md"
+aliases: ["/zpm/docs/reference/mcp-tools-reference/"]
+---
+
+
+
+## Protocol
+
+- **Transport**: STDIO (stdin/stdout)
+- **Protocol version**: `2026-07-28`
+- **Server name**: `zpm`
+- **Server version**: reported by `server/discover`
+
+## Server Capabilities
+
+The `server/discover` result advertises these capabilities.
+
+| Capability | Supported | Details |
+|------------|-----------|---------|
+| Tools | yes | `listChanged: true` |
+| Resources | no | Deferred to future features |
+| Prompts | no | Deferred to future features |
+
+## Lifecycle
+
+Send one JSON-RPC request per line on STDIO. Each request includes `params._meta` with the protocol version, client identity, and client capabilities.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "server/discover",
+  "params": {
+    "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientInfo": {
+        "name": "example",
+        "version": "1.0"
+      },
+      "io.modelcontextprotocol/clientCapabilities": {}
+    }
+  }
+}
+```
+
+The server returns `result.supportedVersions`, `result.capabilities`, and its identity under `result._meta["io.modelcontextprotocol/serverInfo"]`. Requests are independent. Closing stdin ends the server process.
+
+## Tool Discovery
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"example","version":"1.0"},"io.modelcontextprotocol/clientCapabilities":{}}}}
+```
+
+The tool examples below omit the common request metadata and show the tool-specific fields of each result. Include the same `params._meta` object when sending a `tools/call` request. A completed call carries `result.resultType` equal to `"complete"`.
+
+## Memory Parameter
+
+Most knowledge and reasoning tools accept an optional `memory` parameter that targets a specific named memory segment. When omitted, the `default` memory is used (backward compatible).
+
+```json
+{
+  "name": "remember_fact",
+  "arguments": {
+    "fact": "task_done(login)",
+    "memory": "feature_auth"
+  }
+}
+```
+
+Mutation tools (`remember_fact`, `define_rule`, `forget_fact`, etc.) return an error if the target memory is mounted read-only. The following tools support the `memory` parameter: `remember_fact`, `upsert_fact`, `assume_fact`, `forget_fact`, `update_fact`, `rename_predicate`, `query_logic`, `define_rule`, `explain_why`, `trace_dependency`, `retract_assumption`, `retract_assumptions`, `list_assumptions`, `get_belief_status`, `get_justification`, `verify_consistency`, `clear_context`, `get_knowledge_schema`, `find_predicate_references`, `save_snapshot`, `restore_snapshot`, `list_snapshots`.
+
+Excluded tools: `echo` (no knowledge base interaction), `get_persistence_status` (reports global persistence layer status), and `get_kb_overview` (pending memory-aware inventory exception: its output combines selected-memory and global information, so the scope of a `memory` selector needs a separate decision).
+
+Each tool in the supported list advertises `memory` as an optional JSON Schema
+string in `tools/list`. The `query_logic`, `explain_why`, `trace_dependency`,
+`verify_consistency`, `get_belief_status`, `get_justification`, `save_snapshot`,
+`restore_snapshot`, `list_assumptions`, `get_knowledge_schema`, and
+`list_snapshots` schemas use the description `Target memory segment (optional,
+defaults to default memory)`. Other tools retain their tool-specific descriptions;
+see each Input Schema below. Omitting `memory` preserves default-memory behavior.
+
+## Overview
+
+This document describes the tools available through the zpm MCP server. Each tool is exposed as a JSON-RPC method that can be called via the `tools/call` request.
+
+## Echo Tool
+
+**Name:** `echo`
+
+**Description:** Echoes back a message string. Useful for testing server connectivity and tool invocation.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "echo",
+    "arguments": {
+      "message": "Hello, world!"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "The message to echo"
+    }
+  },
+  "required": ["message"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello, world!"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `message` argument is missing or null:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Remember Fact Tool
+
+**Name:** `remember_fact`
+
+**Description:** Assert a Prolog fact into the knowledge base. Facts persist in-memory for the duration of the engine session.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "remember_fact",
+    "arguments": {
+      "fact": "human(socrates)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "A Prolog fact to assert (e.g. \"human(socrates)\")"
+    }
+  },
+  "required": ["fact"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Asserted: human(socrates)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `fact` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Define Rule Tool
+
+**Name:** `define_rule`
+
+**Description:** Assert a Prolog rule into the knowledge base. Constructs a rule from head and body (`Head :- Body`), validates syntax (including balanced parentheses), and inserts via `assertz/1`.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "define_rule",
+    "arguments": {
+      "head": "mortal(X)",
+      "body": "human(X)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "head": {
+      "type": "string",
+      "description": "The rule head (e.g. \"mortal(X)\")"
+    },
+    "body": {
+      "type": "string",
+      "description": "The rule body (e.g. \"human(X)\")"
+    }
+  },
+  "required": ["head", "body"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Asserted rule: mortal(X) :- human(X)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If `head` or `body` is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the rule has invalid Prolog syntax (e.g. unbalanced parentheses):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Invalid Prolog syntax in rule: unbalanced parentheses",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Query Logic Tool
+
+**Name:** `query_logic`
+
+**Description:** Execute a Prolog goal and return all variable bindings as JSON. Evaluates a deterministic Prolog query against the knowledge base and returns all solutions with their variable bindings.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "query_logic",
+    "arguments": {
+      "goal": "fruit(X)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "goal": {
+      "type": "string",
+      "description": "A Prolog goal to query (e.g. \"fruit(X)\", \"parent(john, Y)\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["goal"]
+}
+```
+
+### Response (Success with Results)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[{\"X\":\"apple\"},{\"X\":\"banana\"}]"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success with No Results)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[]"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `goal` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Trace Dependency Tool
+
+**Name:** `trace_dependency`
+
+**Description:** Trace transitive dependencies from a start node using `path/2` rules. Queries the knowledge base for all nodes reachable from a given start node through dependency chains, useful for exploring graph-like structures in logical knowledge bases.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "trace_dependency",
+    "arguments": {
+      "start_node": "a"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "start_node": {
+      "type": "string",
+      "description": "The starting node to trace dependencies from (e.g. \"a\", \"module_a\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["start_node"]
+}
+```
+
+### Response (Success with Dependencies)
+
+Requires `path/2` rule defined in the knowledge base (typically via `define_rule`):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[\"b\",\"c\"]"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success with No Dependencies)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[]"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `start_node` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Verify Consistency Tool
+
+**Name:** `verify_consistency`
+
+**Description:** Check the knowledge base for integrity violations by querying `integrity_violation/N` predicates. Returns all detected contradictions or constraint breaches with their variable bindings.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "verify_consistency",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "scope": {
+      "type": "string",
+      "description": "Optional domain scope to filter integrity checks (e.g. \"deployment\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": []
+}
+```
+
+### Response (Success with Violations)
+
+Requires `integrity_violation/1` rules defined via `define_rule`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"violations\":[\"deploy_v3\"]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success with No Violations)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"violations\":[]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the Prolog engine is unavailable:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "ExecutionFailed",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Explain Why Tool
+
+**Name:** `explain_why`
+
+**Description:** Trace the proof tree for a given fact and return a structured JSON explanation of how it was derived. Uses recursive `clause/2` querying to reconstruct the deduction chain.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "explain_why",
+    "arguments": {
+      "fact": "risky(deploy_v3)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "The Prolog term to explain (e.g. \"risky(deploy_v3)\")"
+    },
+    "max_depth": {
+      "type": "integer",
+      "description": "Optional maximum proof tree depth (truncates deeper levels)"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["fact"]
+}
+```
+
+### Response (Success — Fact Proven)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"fact\":\"risky(deploy_v3)\",\"proven\":true,\"proof_tree\":{\"goal\":\"risky(deploy_v3)\",\"rule_applied\":\"risky(X) :- untested(X), in_production(X)\",\"children\":[{\"goal\":\"untested(deploy_v3)\",\"rule_applied\":\"fact\",\"children\":[]},{\"goal\":\"in_production(deploy_v3)\",\"rule_applied\":\"fact\",\"children\":[]}]}}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success — Fact Not Proven)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"fact\":\"risky(deploy_v3)\",\"proven\":false,\"proof_tree\":null}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `fact` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Find Predicate References Tool
+
+**Name:** `find_predicate_references`
+
+**Description:** Locate all usage sites of a Prolog predicate within the knowledge base. Returns every clause body containing the target predicate, the count of direct facts matching the predicate's functor/arity, TMS assumptions referencing the predicate, and module-qualified references from other memory segments. Essential for safe refactoring and understanding predicate dependencies.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "method": "tools/call",
+  "params": {
+    "name": "find_predicate_references",
+    "arguments": {
+      "functor": "task_status",
+      "arity": 2,
+      "memory": "default"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "functor": {
+      "type": "string",
+      "description": "The predicate functor to search for (e.g. \"task_status\")"
+    },
+    "arity": {
+      "type": "integer",
+      "description": "The arity of the predicate (optional; when omitted, matches all arities of the functor)"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Memory segment to search: a named segment, \"default\" for the default memory, or \"__all__\" to scan every mounted memory (default: \"default\")"
+    },
+    "include_cross_memory_refs": {
+      "type": "boolean",
+      "description": "Include module-qualified references from other memory segments in the response (default: true)"
+    }
+  },
+  "required": ["functor"]
+}
+```
+
+### Response (Success — References Found)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"target\":\"task_status/2\",\"memory\":\"default\",\"rules\":[{\"head\":\"active_work(X)\",\"body\":\"task_status(X, in_progress)\",\"memory\":\"default\"}],\"direct_facts_count\":2,\"facts_referenced_in_assumptions\":[{\"assumption\":\"sprint_planning\",\"fact\":\"task_status(f024, done)\",\"memory\":\"default\"}],\"cross_memory_refs\":[]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success — No References)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"target\":\"nonexistent_predicate\",\"memory\":\"default\",\"rules\":[],\"direct_facts_count\":0,\"facts_referenced_in_assumptions\":[],\"cross_memory_refs\":[]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success — Cross-Memory References)
+
+When `memory: "__all__"` and `include_cross_memory_refs: true`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"target\":\"task_status/2\",\"memory\":\"__all__\",\"rules\":[{\"head\":\"active_work(X)\",\"body\":\"task_status(X, in_progress)\",\"memory\":\"default\"},{\"head\":\"critical_tasks(X)\",\"body\":\"audit:task_status(X, critical)\",\"memory\":\"audit\"}],\"direct_facts_count\":3,\"facts_referenced_in_assumptions\":[],\"cross_memory_refs\":[{\"head\":\"check_external(X)\",\"body\":\"monitoring:task_status(X, blocked)\",\"memory\":\"reporting\",\"qualifier\":\"monitoring\"}]}"
+      }
+    ]
+  }
+}
+```
+
+### Response Schema
+
+Top-level fields in the embedded JSON:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `target` | string | The search target formatted as `"functor/arity"` when arity is provided, or `"functor"` when omitted |
+| `memory` | string | The requested memory scope: a segment name, `"default"`, or `"__all__"` |
+| `rules` | array | One entry per rule whose body contains the target predicate; each entry has `head`, `body`, and `memory` fields |
+| `rules[].head` | string | The rule head as a Prolog term string |
+| `rules[].body` | string | The rule body as a Prolog term string |
+| `rules[].memory` | string | The originating memory segment |
+| `direct_facts_count` | integer | Count of facts with the target functor/arity (facts have a trivial body of `true`) |
+| `facts_referenced_in_assumptions` | array | One entry per TMS assumption referencing the target predicate; each entry has `assumption`, `fact`, and `memory` fields |
+| `facts_referenced_in_assumptions[].assumption` | string | The assumption label (hypothesis name) |
+| `facts_referenced_in_assumptions[].fact` | string | The assumed fact term as a Prolog term string |
+| `facts_referenced_in_assumptions[].memory` | string | The originating memory segment |
+| `cross_memory_refs` | array | One entry per module-qualified reference (e.g., `other_seg:predicate(...)`) found in another memory segment; each entry has `head`, `body`, `memory`, and `qualifier` fields; empty unless `include_cross_memory_refs: true` |
+| `cross_memory_refs[].head` | string | The rule head as a Prolog term string |
+| `cross_memory_refs[].body` | string | The rule body as a Prolog term string |
+| `cross_memory_refs[].memory` | string | The memory segment that **owns** the referencing rule (the segment being scanned) |
+| `cross_memory_refs[].qualifier` | string | The module name used in the cross-memory call (the segment being referenced, e.g. `"default"` in `default:task_status(X, done)`) |
+
+### Response (Error)
+
+If the `functor` argument is missing or not a string:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the `functor` contains invalid characters or is not a valid Prolog atom:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the `memory` parameter names a segment that is not mounted:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Memory not mounted: unknown_segment",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the `arity` argument is negative or not an integer:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Rename Predicate Tool
+
+**Name:** `rename_predicate`
+
+**Description:** Atomically rename a Prolog functor across all facts, rules, TMS justifications, and optionally cross-memory references in the knowledge base. A dry-run mode previews changes without mutation. Protects against self-renames, name collisions, ambiguous arities, and built-in functor corruption.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "tools/call",
+  "params": {
+    "name": "rename_predicate",
+    "arguments": {
+      "old_functor": "task_status",
+      "new_functor": "feature_status",
+      "arity": 2,
+      "memory": "default",
+      "dry_run": false,
+      "propagate_cross_memory_refs": false
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "old_functor": {
+      "type": "string",
+      "description": "The current functor name to rename (must be a valid Prolog atom)"
+    },
+    "new_functor": {
+      "type": "string",
+      "description": "The new functor name (must be a valid Prolog atom and not already exist with the same arity)"
+    },
+    "arity": {
+      "type": "integer",
+      "description": "The arity of the functor to rename (required if multiple arities exist). If omitted and only one arity exists, that arity is used. If omitted and multiple arities exist, returns an error listing detected arities."
+    },
+    "memory": {
+      "type": "string",
+      "description": "The target memory segment (default: 'default'). Must be writable (not mounted read-only)."
+    },
+    "dry_run": {
+      "type": "boolean",
+      "description": "Preview mode: returns the full impact report without mutating the KB (default: false)"
+    },
+    "propagate_cross_memory_refs": {
+      "type": "boolean",
+      "description": "When true, rewrite qualified references (e.g., 'segment:old_functor/N') in all writable mounted memories (default: false). Cross-memory impact is always reported regardless of this flag."
+    }
+  },
+  "required": ["old_functor", "new_functor"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"renamed_facts\": 2, \"rewritten_rule_bodies\": 1, \"affected_rule_ids\": [\"active_work(X)\"], \"cross_memory_impact\": {\"rewritten\": [], \"warnings\": [], \"skipped_readonly\": []}, \"is_error\": false}"
+      }
+    ]
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `renamed_facts` | number | Count of facts renamed from `old_functor/arity` to `new_functor/arity` |
+| `rewritten_rule_bodies` | number | Count of rule bodies that mentioned the old functor and were rewritten |
+| `affected_rule_ids` | array | List of rule head identifiers (as strings) that were rewritten, e.g., `["active_work(X)", "completed(X)"]` |
+| `cross_memory_impact` | object | Summary of the rename's impact across all mounted memories |
+| `cross_memory_impact.rewritten` | array | Memories where qualified refs were updated (only populated when `propagate_cross_memory_refs=true`) |
+| `cross_memory_impact.rewritten[].memory` | string | Name of the rewritten memory segment |
+| `cross_memory_impact.rewritten[].rules_updated` | number | Count of rules updated in this memory |
+| `cross_memory_impact.warnings` | array | Writable memories with qualified refs that were NOT modified (only populated when `propagate_cross_memory_refs=false`) |
+| `cross_memory_impact.warnings[].memory` | string | Name of the memory containing unmodified refs |
+| `cross_memory_impact.warnings[].refs` | number | Count of unmodified qualified refs in this memory |
+| `cross_memory_impact.warnings[].reason` | string | Always `"propagate_cross_memory_refs=false"` |
+| `cross_memory_impact.skipped_readonly` | array | Read-only memories with qualified refs (always present, never modified) |
+| `cross_memory_impact.skipped_readonly[].memory` | string | Name of the read-only memory |
+| `cross_memory_impact.skipped_readonly[].refs` | number | Count of qualified refs in this memory |
+| `cross_memory_impact.skipped_readonly[].reason` | string | Always `"read-only"` |
+| `is_error` | boolean | False on success; if true, refer to response text for error message (string) |
+
+### Dry Run Example
+
+```bash
+zpm rename-predicate --old_functor task_status --new_functor feature_status --arity 2 --dry_run true
+```
+
+Returns the same response shape as a real run (counts, affected rules, cross-memory impact) **without modifying the KB**. Verification: a subsequent `query_logic` for the old functor still returns results.
+
+### Cross-Memory Impact Example
+
+When `propagate_cross_memory_refs=true` and multiple memories reference the renamed functor:
+
+```json
+{
+  "renamed_facts": 5,
+  "rewritten_rule_bodies": 3,
+  "affected_rule_ids": ["process_work(X)", "check_status(Y)"],
+  "cross_memory_impact": {
+    "rewritten": [
+      {
+        "memory": "audit",
+        "rules_updated": 1
+      },
+      {
+        "memory": "reporting",
+        "rules_updated": 2
+      }
+    ],
+    "warnings": [],
+    "skipped_readonly": [
+      {
+        "memory": "archive",
+        "refs": 3,
+        "reason": "read-only"
+      }
+    ]
+  },
+  "is_error": false
+}
+```
+
+### Usage Examples
+
+#### Basic Single-Memory Rename
+
+```bash
+# Rename task_status/2 to feature_status/2 in the default memory
+zpm rename-predicate \
+  --old_functor task_status \
+  --new_functor feature_status \
+  --arity 2
+```
+
+#### Dry Run Before Applying
+
+```bash
+# Preview the impact without modifying anything
+zpm rename-predicate \
+  --old_functor task_status \
+  --new_functor feature_status \
+  --arity 2 \
+  --dry_run true
+```
+
+#### Rename in a Specific Memory
+
+```bash
+# Rename within the 'audit_log' memory segment
+zpm rename-predicate \
+  --memory audit_log \
+  --old_functor check_result \
+  --new_functor test_result \
+  --arity 2
+```
+
+#### Cross-Memory Propagation
+
+```bash
+# Rename and rewrite qualified refs in all writable mounted memories
+zpm rename-predicate \
+  --old_functor task_status \
+  --new_functor feature_status \
+  --arity 2 \
+  --propagate_cross_memory_refs true
+```
+
+### Response (Error)
+
+#### Ambiguous Arity (Multiple Arities Exist)
+
+If `old_functor` exists with multiple arities and `arity` is not provided:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Ambiguous arity for task_status; detected arities: 1, 2. Specify arity parameter.",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+#### Name Collision (Target Name Already Exists)
+
+If `new_functor/arity` already exists:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cannot rename: feature_status/2 already exists in memory 'default'",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+#### Read-Only Memory
+
+If the target memory is mounted read-only:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cannot rename in read-only memory: archive",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+#### Built-In Operator (Blacklisted Functor)
+
+If attempting to rename a protected ISO Prolog operator:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cannot rename ISO operator: =/2",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+#### Invalid Arguments
+
+If required arguments are missing or invalid:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Guarantees
+
+- **Atomicity**: All-or-nothing at the per-memory level. If any write fails, the engine state and WAL are rolled back for that memory.
+- **TMS Preservation**: Assumption identifiers remain unchanged; justifications referencing the old functor are automatically updated to the new functor.
+- **Collision Detection**: Rejects renames where the target name already exists (no silent merges).
+- **Dry Run Byte-Identity**: When `dry_run=true`, the KB and WAL file remain byte-identical before and after the call.
+- **Cross-Memory Reporting**: Impact across all mounted memories is always computed and reported, even when `propagate_cross_memory_refs=false`.
+
+### Blacklisted Operators (Cannot be Renamed)
+
+The following ISO Prolog operators cannot be renamed, whether as `old_functor` or `new_functor`:
+`=/2`, `,/2`, `;/2`, `is/2`, `->/2`, `\=/2`, `==/2`, `\==/2`, `=../2`, `@</2`, `@>/2`, `@=</2`, `@>=/2`, `</2`, `>/2`, `=</2`, `>=/2`, `+/2`, `-/2`, `*/2`, `//2`, `:-/2`, `:-/1`, `\+/1`, `!/0`
+
+### See Also
+
+- [Rename Predicates Safely](/zpm/user-guide/rename-predicate.md) — How-to guide with workflow examples
+- [Find Predicate References Tool](#find-predicate-references-tool) — Locate all usage sites before renaming
+- [Get Knowledge Schema Tool](#get-knowledge-schema-tool) — Explore all predicates in the knowledge base
+- [Truth Maintenance System](/zpm/user-guide/truth-maintenance.md) — Understand how assumptions are updated
+
+## Get KB Overview Tool
+
+**Name:** `get_kb_overview`
+
+**Description:** Return a single-call JSON snapshot of the default knowledge base: file-loaded static and asserted user predicates (with functor, arity, kind, clause count, and sample clauses as Prolog term strings), the active assumptions, persisted snapshots metadata, persistence layer health, and mounted memory segments. Replaces the chained sequence of `get_knowledge_schema` + `list_assumptions` + `list_snapshots` + `get_persistence_status` + `list_memories` with one round-trip. Read-only; the tool has no memory selector.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "method": "tools/call",
+  "params": {
+    "name": "get_kb_overview",
+    "arguments": {
+      "sample_size": 2
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "sample_size": {
+      "type": "integer",
+      "description": "Number of sample clauses per predicate (default: 2, max: 50)"
+    }
+  },
+  "required": []
+}
+```
+
+The `sample_size` argument is optional. Values below `0` are clamped to `0`; values above `50` are clamped to `50`. When omitted, defaults to `2`.
+
+### Response (Success — Populated KB)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"predicates\":[{\"functor\":\"parent\",\"arity\":2,\"kind\":\"fact\",\"count\":2,\"samples\":[\"parent(tom, bob)\",\"parent(bob, sue)\"]},{\"functor\":\"ancestor\",\"arity\":2,\"kind\":\"rule\",\"count\":1,\"samples\":[\"ancestor(X, Y) :- parent(X, Y)\"]}],\"assumptions\":{\"count\":1,\"names\":[\"infra_healthy\"]},\"snapshots\":{\"count\":1,\"latest\":\"before_refactor\",\"latest_at\":\"2026-05-17T10:42:11Z\"},\"persistence\":{\"wal_pending\":2,\"healthy\":true},\"mounts\":{\"available\":true,\"count\":1,\"items\":[{\"name\":\"default\",\"scope\":\"project\",\"mode\":\"rw\"}]},\"truncated\":false}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success — Empty KB)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"predicates\":[],\"assumptions\":{\"count\":0,\"names\":[]},\"snapshots\":{\"count\":0,\"latest\":null,\"latest_at\":null},\"persistence\":{\"wal_pending\":0,\"healthy\":false},\"mounts\":{\"available\":false,\"count\":0,\"items\":[]},\"truncated\":false}"
+      }
+    ]
+  }
+}
+```
+
+### Response Schema
+
+Top-level fields in the embedded JSON:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `predicates` | array | One entry per user-defined predicate with inspectable clauses in the default memory, including file-loaded static facts and rules; builtins and system predicates are excluded |
+| `predicates[].functor` | string | Predicate functor name |
+| `predicates[].arity` | integer | Number of arguments |
+| `predicates[].kind` | string | `"fact"` — all clauses have a `true` body; `"rule"` — all clauses have a non-trivial body; `"both"` — predicate contains at least one fact and at least one rule |
+| `predicates[].count` | integer | Total number of clauses |
+| `predicates[].samples` | array of string | Up to `sample_size` clauses, rendered as Prolog term strings (`head` for facts, `head :- body` for rules); empty when `sample_size: 0` |
+| `assumptions.count` | integer | Number of active assumptions |
+| `assumptions.names` | array of string | Sorted, deduplicated assumption identifiers |
+| `snapshots.count` | integer | Number of persisted snapshots |
+| `snapshots.latest` | string \| null | Most recently created snapshot name (lexicographic ordering), or `null` if none |
+| `snapshots.latest_at` | string \| null | ISO-8601 UTC timestamp of the latest snapshot file's mtime, or `null` if none |
+| `persistence.wal_pending` | integer | Count of unflushed WAL journal entries (best-effort scan) |
+| `persistence.healthy` | boolean | `true` when the persistence manager is active; `false` when degraded, disabled, or unavailable |
+| `mounts.available` | boolean | `true` when the memory registry is initialized; `false` when it is not yet set up |
+| `mounts.count` | integer | Number of currently mounted memory segments |
+| `mounts.items` | array | One entry per mounted segment; empty when `mounts.available` is `false` or no segments are mounted |
+| `mounts.items[].name` | string | Mount name (a valid Prolog atom) |
+| `mounts.items[].scope` | string | `"project"` — scoped to the current project; `"global"` — shared across projects |
+| `mounts.items[].mode` | string | `"rw"` — read-write; `"ro"` — read-only |
+| `truncated` | boolean | `true` when the response exceeded the internal 64 KiB budget and samples were trimmed; the tool favors breadth (reducing samples across all predicates) over depth |
+
+### Response (Error)
+
+If the Prolog engine is not initialized:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Prolog engine is not initialized",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+The tool never raises an error for `null`/missing arguments, an empty KB, missing snapshots, or a degraded persistence layer — it returns a valid envelope with zero counts and `persistence.healthy: false` instead.
+
+## Get Knowledge Schema Tool
+
+**Name:** `get_knowledge_schema`
+
+**Description:** Introspect the selected memory to discover file-loaded static and asserted user predicates, their arities, clause counts, and whether they are facts, rules, or both. Returns structural metadata only — no predicate content is exposed. Read-only mounts support discovery.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "method": "tools/call",
+  "params": {
+    "name": "get_knowledge_schema",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": []
+}
+```
+
+No arguments are required. The tool accepts empty or null arguments.
+
+### Response (Success with Predicates)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"predicates\":[{\"name\":\"user_prefers\",\"arity\":1,\"type\":\"fact\",\"count\":2},{\"name\":\"depends_on\",\"arity\":2,\"type\":\"fact\",\"count\":3},{\"name\":\"path\",\"arity\":2,\"type\":\"both\",\"count\":4}],\"total\":3}"
+      }
+    ]
+  }
+}
+```
+
+Each predicate entry includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Predicate functor name |
+| `arity` | integer | Number of arguments |
+| `type` | string | `"fact"`, `"rule"`, or `"both"` |
+| `count` | integer | Total number of clauses |
+
+The root-level `total` field indicates the number of user-defined predicates.
+Only predicates with inspectable clauses in the selected memory appear; builtins,
+operators, and ZPM helper predicates are excluded. An introspection failure is
+reported as `ExecutionFailed` rather than as an empty schema.
+
+### Response (Empty Knowledge Base)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"predicates\":[],\"total\":0}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If predicate introspection fails:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 9,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "ExecutionFailed",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Forget Fact Tool
+
+**Name:** `forget_fact`
+
+**Description:** Remove a single fact from the knowledge base by retracting the first matching clause. Uses Prolog's `retract/1` semantics — when multiple identical facts exist, only one is removed per call.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "tools/call",
+  "params": {
+    "name": "forget_fact",
+    "arguments": {
+      "fact": "human(socrates)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "A Prolog fact to retract (e.g. \"human(socrates)\")"
+    }
+  },
+  "required": ["fact"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Retracted: human(socrates)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Fact Not Found)
+
+If the fact does not exist in the knowledge base:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "No matching clause found for: human(socrates)",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If the `fact` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Clear Context Tool
+
+**Name:** `clear_context`
+
+**Description:** Remove all facts from the knowledge base matching a given category or pattern. Uses Prolog's `retractall/1` semantics — clears all clauses matching the pattern in a single operation. The tool always succeeds, even when no matching facts exist (idempotent behavior).
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "method": "tools/call",
+  "params": {
+    "name": "clear_context",
+    "arguments": {
+      "category": "project(beta, _)"
+    }
+  }
+}
+```
+
+### Request with Memory Segment
+
+To target a specific memory segment, pass the `memory` parameter:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "tools/call",
+  "params": {
+    "name": "clear_context",
+    "arguments": {
+      "category": "task_status(_, _)",
+      "memory": "feature_auth"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "description": "A Prolog pattern to match facts for bulk deletion (e.g. \"project(beta, _)\", \"role(_, _)\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["category"]
+}
+```
+
+### Response (Success - Matched Facts)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cleared all facts matching: project(beta, _)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Success - No Matches)
+
+When no facts match the pattern (idempotent — still returns success):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cleared all facts matching: nonexistent(_, _)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If the `category` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Update Fact Tool
+
+**Name:** `update_fact`
+
+**Description:** Atomically replace an existing Prolog fact in the knowledge base (retract old_fact, assert new_fact). Returns an error if old_fact is not found, leaving the knowledge base unchanged.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "tools/call",
+  "params": {
+    "name": "update_fact",
+    "arguments": {
+      "old_fact": "server(alpha, \"1.0\")",
+      "new_fact": "server(alpha, \"2.0\")"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "old_fact": {
+      "type": "string",
+      "description": "The existing Prolog fact to retract (e.g. \"server(alpha, \\\"1.0\\\")\")"
+    },
+    "new_fact": {
+      "type": "string",
+      "description": "The new Prolog fact to assert in its place (e.g. \"server(alpha, \\\"2.0\\\")\")"
+    }
+  },
+  "required": ["old_fact", "new_fact"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Updated: server(alpha, \"1.0\") -> server(alpha, \"2.0\")"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Fact Not Found)
+
+If the old fact does not exist in the knowledge base:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "No matching clause for: server(alpha, \"1.0\")",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Rule Syntax)
+
+If the new_fact contains rule syntax (`:-`):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "new_fact must not contain rule syntax",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If either argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Upsert Fact Tool
+
+**Name:** `upsert_fact`
+
+**Description:** Insert or replace a Prolog fact in the knowledge base. Retracts all existing clauses matching the same functor and first argument, then asserts the new fact. Succeeds even if no prior fact exists.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "method": "tools/call",
+  "params": {
+    "name": "upsert_fact",
+    "arguments": {
+      "fact": "deploy(prod, v2)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "A Prolog fact to insert or replace (e.g. \"deploy(prod, v2)\")"
+    }
+  },
+  "required": ["fact"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Upserted: deploy(prod, v2)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Rule Syntax)
+
+If the fact contains rule syntax (`:-`):
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "fact must not contain rule syntax",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If the `fact` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Assume Fact Tool
+
+**Name:** `assume_fact`
+
+**Description:** Assert a Prolog fact under a named assumption for truth maintenance tracking. The assumption name must be lowercase alphanumeric with underscores. Mutations are journaled to the WAL.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 14,
+  "method": "tools/call",
+  "params": {
+    "name": "assume_fact",
+    "arguments": {
+      "fact": "available(server_a)",
+      "assumption": "infra_healthy"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "A Prolog fact to assert (e.g. \"available(server_a)\")"
+    },
+    "assumption": {
+      "type": "string",
+      "description": "The assumption name justifying this fact (e.g. \"infra_healthy\")"
+    }
+  },
+  "required": ["fact", "assumption"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 14,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Assumed: available(server_a) under assumption 'infra_healthy'"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If `fact` or `assumption` is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 14,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+Returns `InvalidArguments` if the `assumption` name is not a valid Prolog atom (lowercase letter followed by alphanumerics/underscores).
+
+---
+
+## Get Belief Status Tool
+
+**Name:** `get_belief_status`
+
+**Description:** Query whether a belief is currently supported and which assumptions justify it. Returns the belief status (`in` or `out`), the list of justifying assumptions, and the fact source attribution (`interactive`, `snapshot`, `journal`, or `unknown`).
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 15,
+  "method": "tools/call",
+  "params": {
+    "name": "get_belief_status",
+    "arguments": {
+      "fact": "available(server_a)"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "The Prolog fact to check belief status for (e.g. \"available(server_a)\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["fact"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 15,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"status\":\"in\",\"justifications\":[\"infra_healthy\"],\"source\":\"interactive\"}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `fact` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 15,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get Justification Tool
+
+**Name:** `get_justification`
+
+**Description:** Return all facts currently supported by a given assumption.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 16,
+  "method": "tools/call",
+  "params": {
+    "name": "get_justification",
+    "arguments": {
+      "assumption": "infra_healthy"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "assumption": {
+      "type": "string",
+      "description": "The assumption name to query (e.g. \"infra_healthy\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["assumption"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 16,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"facts\":[\"available(server_a)\"]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `assumption` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 16,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+Returns `InvalidArguments` if the `assumption` name is not a valid Prolog atom (lowercase letter followed by alphanumerics/underscores).
+
+---
+
+## List Assumptions Tool
+
+**Name:** `list_assumptions`
+
+**Description:** Return all named assumptions currently registered in the truth maintenance system. Returns a deduplicated list.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 17,
+  "method": "tools/call",
+  "params": {
+    "name": "list_assumptions",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": []
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 17,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"assumptions\":[\"infra_healthy\",\"budget_approved\"]}"
+      }
+    ]
+  }
+}
+```
+
+### Response (Empty)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 17,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"assumptions\":[]}"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Retract Assumption Tool
+
+**Name:** `retract_assumption`
+
+**Description:** Retract a named assumption and remove all facts that have no remaining justifications. Mutations are journaled to the WAL. Returns an error if the assumption does not exist.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 18,
+  "method": "tools/call",
+  "params": {
+    "name": "retract_assumption",
+    "arguments": {
+      "assumption": "infra_healthy"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "assumption": {
+      "type": "string",
+      "description": "The assumption name to retract (e.g. \"infra_healthy\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["assumption"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 18,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Retracted assumption 'infra_healthy': 2 fact(s) removed"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If the `assumption` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 18,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+Returns `InvalidArguments` if the `assumption` name is not a valid Prolog atom (lowercase letter followed by alphanumerics/underscores).
+
+### Response (Error - Unknown Assumption)
+
+If the assumption does not exist:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 18,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Unknown assumption 'nonexistent'",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Retract Assumptions Tool
+
+**Name:** `retract_assumptions`
+
+**Description:** Retract all assumptions matching a glob-style pattern with full propagation semantics. Each retracted assumption's dependent facts are cleaned up. Mutations are journaled to the WAL.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 19,
+  "method": "tools/call",
+  "params": {
+    "name": "retract_assumptions",
+    "arguments": {
+      "pattern": "infra_*"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "pattern": {
+      "type": "string",
+      "description": "A glob-style pattern to match assumption names (e.g. \"infra_*\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["pattern"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 19,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Retracted pattern 'infra_*': 3 assumption(s) removed"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `pattern` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 19,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+Returns `InvalidArguments` if the `pattern` contains characters outside the allowed glob charset (lowercase letters, digits, underscores, and the wildcards `*` and `?`).
+
+---
+
+## Save Snapshot Tool
+
+**Name:** `save_snapshot`
+
+**Description:** Persist the current Prolog knowledge base to a named snapshot file. The snapshot contains all facts, rules, and TMS metadata in valid Prolog source syntax. After a snapshot, the WAL journal is rotated.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✓
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 20,
+  "method": "tools/call",
+  "params": {
+    "name": "save_snapshot",
+    "arguments": {
+      "name": "before_refactor"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "A name for the snapshot (e.g. \"before_refactor\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["name"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 20,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Snapshot 'before_refactor' saved successfully."
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `name` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 20,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Restore Snapshot Tool
+
+**Name:** `restore_snapshot`
+
+**Description:** Restore the Prolog knowledge base from a named snapshot file. This replaces the current knowledge base state entirely with the snapshot contents. All predicates in the snapshot are loaded as dynamic and are immediately queryable via `query_logic` and visible in `get_knowledge_schema`.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "method": "tools/call",
+  "params": {
+    "name": "restore_snapshot",
+    "arguments": {
+      "name": "before_refactor"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The snapshot name to restore from (e.g. \"before_refactor\")"
+    },
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": ["name"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Snapshot 'before_refactor' restored successfully."
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Not Found)
+
+If the snapshot file does not exist:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "ExecutionFailed",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Response (Error - Invalid Arguments)
+
+If the `name` argument is missing, null, or empty:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## List Snapshots Tool
+
+**Name:** `list_snapshots`
+
+**Description:** List all available Prolog knowledge base snapshots.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 22,
+  "method": "tools/call",
+  "params": {
+    "name": "list_snapshots",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "memory": {
+      "type": "string",
+      "description": "Target memory segment (optional, defaults to default memory)"
+    }
+  },
+  "required": []
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 22,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Snapshots: [before_refactor, daily_backup]"
+      }
+    ]
+  }
+}
+```
+
+### Response (Empty)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 22,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Snapshots: []"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get Persistence Status Tool
+
+**Name:** `get_persistence_status`
+
+**Description:** Query the health and status of the persistence subsystem, including operational mode, persistence directory, last snapshot, and journal size.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 23,
+  "method": "tools/call",
+  "params": {
+    "name": "get_persistence_status",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {},
+  "required": []
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 23,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "status: active\ndir: /tmp/zpm-persistence\nlast_snapshot: before_refactor\njournal_size: 1024 bytes"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the persistence manager is unavailable:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 23,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "ExecutionFailed",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+## Create Memory Tool
+
+**Name:** `create_memory`
+
+**Description:** Create a new named memory segment backed by a dedicated Prolog module. Creates the on-disk directory and `knowledge.pl` module header. Does not mount the memory.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✗
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 24,
+  "method": "tools/call",
+  "params": {
+    "name": "create_memory",
+    "arguments": {
+      "name": "feature_auth",
+      "scope": "project"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "A valid Prolog atom (snake_case) naming the memory segment"
+    },
+    "scope": {
+      "type": "string",
+      "description": "The scope of the memory segment: \"project\" (default) or \"global\""
+    }
+  },
+  "required": ["name"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 24,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Created memory 'feature_auth' (project scope)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `name` argument is missing, null, empty, or not a valid Prolog atom:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 24,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the memory name already exists:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 24,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Memory 'feature_auth' already exists",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Mount Memory Tool
+
+**Name:** `mount_memory`
+
+**Description:** Mount an existing memory segment, loading its snapshot and replaying its WAL. Once mounted, the memory can be targeted by knowledge tools via the `memory` parameter.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 25,
+  "method": "tools/call",
+  "params": {
+    "name": "mount_memory",
+    "arguments": {
+      "name": "feature_auth",
+      "mode": "rw"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the memory segment to mount"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Mount mode: \"rw\" (default, read-write) or \"ro\" (read-only)"
+    }
+  },
+  "required": ["name"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 25,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Mounted memory 'feature_auth' (rw)"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `name` argument is missing, null, empty, or not a valid Prolog atom:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 25,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the memory is already mounted or does not exist:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 25,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Memory 'feature_auth' is already mounted",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Unmount Memory Tool
+
+**Name:** `unmount_memory`
+
+**Description:** Unmount a mounted memory segment, flushing its WAL to disk and unloading the Prolog module. The `default` memory cannot be unmounted.
+
+**Annotations:**
+- Read-only: ✗
+- Idempotent: ✗
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 26,
+  "method": "tools/call",
+  "params": {
+    "name": "unmount_memory",
+    "arguments": {
+      "name": "feature_auth"
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the memory segment to unmount"
+    }
+  },
+  "required": ["name"]
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 26,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Unmounted memory 'feature_auth'"
+      }
+    ]
+  }
+}
+```
+
+### Response (Error)
+
+If the `name` argument is missing, null, empty, or not a valid Prolog atom:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 26,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "InvalidArguments",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+If the memory is not mounted or the name is "default":
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 26,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Cannot unmount the default memory",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## List Memories Tool
+
+**Name:** `list_memories`
+
+**Description:** List all discoverable memory segments (mounted and unmounted) across project and global scopes. Returns name, scope, mount status, and mode for each memory.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 27,
+  "method": "tools/call",
+  "params": {
+    "name": "list_memories",
+    "arguments": {}
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {},
+  "required": []
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 27,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"memories\":[{\"name\":\"default\",\"scope\":\"project\",\"mounted\":true,\"mode\":\"rw\"},{\"name\":\"feature_auth\",\"scope\":\"project\",\"mounted\":false,\"mode\":null}]}"
+      }
+    ]
+  }
+}
+```
+
+Each memory entry includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Memory segment name |
+| `scope` | string | `"project"` or `"global"` |
+| `mounted` | boolean | Whether the memory is currently mounted |
+| `mode` | string or null | `"rw"`, `"ro"`, or `null` if not mounted |
+
+### Response (Error)
+
+If discovery fails:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 27,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "ExecutionFailed",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Get KB Overview Tool
+
+**Name:** `get_kb_overview`
+
+**Description:** Return a single-call JSON snapshot of the default zpm knowledge base, including file-loaded static and asserted predicates with sample clauses, active assumptions, available snapshots, and persistence layer health. No memory selector is available.
+
+**Annotations:**
+- Read-only: ✓
+- Idempotent: ✓
+- Non-destructive: ✓
+
+### Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "method": "tools/call",
+  "params": {
+    "name": "get_kb_overview",
+    "arguments": {
+      "sample_size": 2
+    }
+  }
+}
+```
+
+### Input Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "sample_size": {
+      "type": "integer",
+      "description": "Number of sample clauses per predicate (default: 2, max: 50). Set to 0 to suppress samples."
+    }
+  },
+  "required": []
+}
+```
+
+### Response (Success)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"predicates\":[{\"name\":\"task_status\",\"arity\":2,\"kind\":\"fact\",\"count\":5,\"samples\":[\"task_status(f017, done)\",\"task_status(f020, pending)\"]},{\"name\":\"depends_on\",\"arity\":2,\"kind\":\"both\",\"count\":3,\"samples\":[\"depends_on(X, Y) :- task_status(X, active)\",\"depends_on(f017, f016)\"]}],\"assumptions\":[{\"name\":\"user_context\",\"facts\":[\"user_id(alice)\",\"session_token(xyz123)\"]},{\"name\":\"experiment_mode\",\"facts\":[\"debug_enabled(true)\"]}],\"snapshots\":[{\"name\":\"before_deploy\",\"timestamp\":1685678900},{\"name\":\"after_migration\",\"timestamp\":1685678950}],\"persistence\":{\"status\":\"active\",\"journal_size_bytes\":2048,\"last_snapshot\":\"after_migration\",\"last_checkpoint_epoch\":1685678950},\"truncated\":false}"
+      }
+    ]
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `predicates` | array | User-defined predicates with inspectable clauses in the default memory, including file-loaded static facts and rules |
+| `predicates[].name` | string | Predicate name (functor) |
+| `predicates[].arity` | number | Predicate arity |
+| `predicates[].kind` | string | `"fact"`, `"rule"`, or `"both"` |
+| `predicates[].count` | number | Total number of clauses (facts + rules) |
+| `predicates[].samples` | array | Up to `sample_size` sample clauses (suppressed if `sample_size: 0`) |
+| `assumptions` | array | List of active assumptions in the truth maintenance system |
+| `assumptions[].name` | string | Assumption identifier |
+| `assumptions[].facts` | array | Facts supported by this assumption |
+| `snapshots` | array | List of available knowledge base snapshots |
+| `snapshots[].name` | string | Snapshot name |
+| `snapshots[].timestamp` | number | Unix epoch timestamp of snapshot creation |
+| `persistence` | object | Persistence layer health status |
+| `persistence.status` | string | `"active"`, `"degraded"`, or `"offline"` |
+| `persistence.journal_size_bytes` | number | Write-ahead journal size in bytes |
+| `persistence.last_snapshot` | string | Name of the most recent snapshot (or null) |
+| `persistence.last_checkpoint_epoch` | number | Unix epoch of the last checkpoint |
+| `truncated` | boolean | True if the response was truncated due to size limits (total output capped at 64 KB) |
+
+### Usage Examples
+
+#### Get overview with default samples (2 clauses per predicate)
+
+```bash
+zpm get-kb-overview
+```
+
+#### Get overview with extended samples (5 clauses per predicate)
+
+```bash
+zpm get-kb-overview --sample-size 5
+```
+
+#### Get overview without samples (for large knowledge bases)
+
+```bash
+zpm get-kb-overview --sample-size 0
+```
+
+### Response (Error)
+
+If the Prolog engine is not initialized or unavailable:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 28,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Prolog engine is not initialized",
+        "isError": true
+      }
+    ]
+  }
+}
+```
+
+### Notes
+
+- Built-in predicates (those starting with `$`, containing `:`, or named `tms_justification`, `zpm_source`, `portray`) are excluded from the overview.
+- Sample clauses are formatted as they appear in the knowledge base (facts as atoms, rules as `Head :- Body`).
+- The knowledge base is queried once, making this tool efficient even for large knowledge bases.
+- Output is truncated at 64 KB. Use `sample_size: 0` to reduce output size for very large knowledge bases.

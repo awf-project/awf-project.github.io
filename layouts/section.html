@@ -1,0 +1,16 @@
+{{ define "main" }}
+<div class="shell">{{ partial "breadcrumb.html" . }}</div>
+<div class="shell reader">
+  {{ partial "reader-nav.html" . }}
+  <article class="article">
+    <h1>{{ .Title }}</h1>{{ with .Description }}<p class="lede">{{ . }}</p>{{ end }}
+    {{ if eq . .FirstSection }}
+      <h2>Browse documentation</h2><ul class="topics">{{ range .Sections.ByWeight }}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a><span>{{ len .RegularPages }} articles</span></li>{{ end }}</ul>
+    {{ end }}
+    {{ if .Content }}<div class="prose">{{ .Content }}</div><details class="contents"><summary>All pages in this section</summary>{{ end }}
+    <ul class="pages">{{ range .Pages.ByWeight }}<li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>{{ end }}</ul>
+    {{ if .Content }}</details>{{ end }}
+    {{ partial "source.html" . }}
+  </article>
+</div>
+{{ end }}
